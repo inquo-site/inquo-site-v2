@@ -5,12 +5,12 @@ import { Sparkles, Code2, Palette, TrendingUp, GraduationCap, Zap } from "lucide
 
 const Landing = () => {
   const categories = [
-    { icon: Sparkles, name: "Writing & Content", count: "15 tools" },
-    { icon: Code2, name: "Coding & Dev", count: "10 tools" },
-    { icon: Palette, name: "Design & Creative", count: "8 tools" },
-    { icon: TrendingUp, name: "Marketing", count: "11 tools" },
-    { icon: GraduationCap, name: "Education", count: "9 tools" },
-    { icon: Zap, name: "Productivity", count: "7 tools" },
+    { icon: Sparkles, name: "Writing & Content", count: "25 tools" },
+    { icon: Code2, name: "Coding & Dev", count: "25 tools" },
+    { icon: Palette, name: "Design & Creative", count: "25 tools" },
+    { icon: TrendingUp, name: "Marketing", count: "14 tools" },
+    { icon: GraduationCap, name: "Education", count: "11 tools" },
+    { icon: Zap, name: "Productivity", count: "11 tools" },
   ];
 
   return (
@@ -23,7 +23,7 @@ const Landing = () => {
           <div className="text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 glass-card text-sm font-medium">
               <Sparkles className="w-4 h-4 text-accent" />
-              <span>50+ AI-Powered Tools</span>
+              <span>100+ AI-Powered Tools</span>
             </div>
             
             <h1 className="text-5xl md:text-7xl font-bold leading-tight">

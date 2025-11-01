@@ -19,7 +19,7 @@ export function PremiumModal({ open, onClose, toolName }: PremiumModalProps) {
       badge: "Pro User",
       icon: Zap,
       features: [
-        "Access All 62+ AI Tools 🔓",
+        "Access All 100+ AI Tools 🔓",
         "Early Access to new tools",
         "40 credits/day usage",
         "Premium AI Models (GPT-4, Gemini, Claude)",
@@ -37,7 +37,7 @@ export function PremiumModal({ open, onClose, toolName }: PremiumModalProps) {
       icon: Crown,
       savings: "Save $51",
       features: [
-        "Access All 62+ AI Tools 🔓",
+        "Access All 100+ AI Tools 🔓",
         "Early Access to new & beta tools",
         "50 credits/day usage",
         "Premium AI Models + API Access",
@@ -75,7 +75,7 @@ export function PremiumModal({ open, onClose, toolName }: PremiumModalProps) {
           </DialogTitle>
           <DialogDescription className="text-center text-lg">
             {toolName ? (
-              <>Upgrade to access <span className="font-semibold text-foreground">{toolName}</span> and 50+ more premium tools</>
+              <>Upgrade to access <span className="font-semibold text-foreground">{toolName}</span> and 90+ more premium tools</>
             ) : (
               "Choose the plan that works best for you"
             )}
