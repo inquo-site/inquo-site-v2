@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -12,114 +11,24 @@ import { Separator } from "@/components/ui/separator";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [authMode, setAuthMode] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showReset, setShowReset] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully logged in.",
-        });
-        navigate("/dashboard");
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-          },
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Account created!",
-          description: "Please check your email to verify your account.",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePhoneAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
-          phone,
-          password,
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully logged in.",
-        });
-        navigate("/dashboard");
-      } else {
-        const { error } = await supabase.auth.signUp({
-          phone,
-          password,
-          options: {
-            channel: 'sms',
-          },
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Account created!",
-          description: "Please check your phone for verification code.",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
         },
       });
-      
       if (error) throw error;
     } catch (error: any) {
       toast({
@@ -131,7 +40,7 @@ const Auth = () => {
     }
   };
 
-  const handlePasswordReset = async (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -144,9 +53,9 @@ const Auth = () => {
       
       toast({
         title: "Password reset email sent!",
-        description: "Check your email for the reset link.",
+        description: "Check your email for the password reset link.",
       });
-      setShowReset(false);
+      setIsForgotPassword(false);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -158,7 +67,85 @@ const Auth = () => {
     }
   };
 
-  if (showReset) {
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (authMode === "email") {
+        if (isLogin) {
+          const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          if (error) throw error;
+          
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully logged in.",
+          });
+          navigate("/dashboard");
+        } else {
+          const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/dashboard`,
+            },
+          });
+          
+          if (error) throw error;
+          
+          toast({
+            title: "Account created!",
+            description: "Please check your email to verify your account.",
+          });
+        }
+      } else {
+        // Phone auth
+        if (isLogin) {
+          const { error } = await supabase.auth.signInWithPassword({
+            phone,
+            password,
+          });
+          
+          if (error) throw error;
+          
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully logged in.",
+          });
+          navigate("/dashboard");
+        } else {
+          const { error } = await supabase.auth.signUp({
+            phone,
+            password,
+            options: {
+              channel: 'sms',
+            },
+          });
+          
+          if (error) throw error;
+          
+          toast({
+            title: "Account created!",
+            description: "Please check your phone for verification code.",
+          });
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isForgotPassword) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-12">
         <Card className="glass-card w-full max-w-md p-8">
@@ -173,11 +160,11 @@ const Auth = () => {
             </p>
           </div>
 
-          <form onSubmit={handlePasswordReset} className="space-y-4">
+          <form onSubmit={handleForgotPassword} className="space-y-4">
             <div>
-              <Label htmlFor="reset-email">Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="reset-email"
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -197,7 +184,7 @@ const Auth = () => {
 
           <div className="mt-6 text-center">
             <button
-              onClick={() => setShowReset(false)}
+              onClick={() => setIsForgotPassword(false)}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
               Back to sign in
@@ -224,6 +211,7 @@ const Auth = () => {
           </p>
         </div>
 
+        {/* Google Sign In */}
         <Button
           onClick={handleGoogleAuth}
           variant="outline"
@@ -241,107 +229,92 @@ const Auth = () => {
 
         <div className="relative my-6">
           <Separator />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-            or continue with
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
+            Or continue with
           </span>
         </div>
 
-        <Tabs defaultValue="email" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="email" className="gap-2">
-              <Mail className="w-4 h-4" />
-              Email
-            </TabsTrigger>
-            <TabsTrigger value="phone" className="gap-2">
-              <Phone className="w-4 h-4" />
-              Phone
-            </TabsTrigger>
-          </TabsList>
+        {/* Auth Mode Toggle */}
+        <div className="flex gap-2 mb-4">
+          <Button
+            type="button"
+            variant={authMode === "email" ? "default" : "outline"}
+            className="flex-1"
+            onClick={() => setAuthMode("email")}
+          >
+            <Mail className="w-4 h-4 mr-2" />
+            Email
+          </Button>
+          <Button
+            type="button"
+            variant={authMode === "phone" ? "default" : "outline"}
+            className="flex-1"
+            onClick={() => setAuthMode("phone")}
+          >
+            <Phone className="w-4 h-4 mr-2" />
+            Phone
+          </Button>
+        </div>
 
-          <TabsContent value="email" className="mt-4">
-            <form onSubmit={handleEmailAuth} className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                />
-              </div>
+        <form onSubmit={handleAuth} className="space-y-4">
+          {authMode === "email" ? (
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+          ) : (
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+1234567890"
+                required
+              />
+            </div>
+          )}
 
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
 
-              {isLogin && (
-                <div className="text-right">
-                  <button
-                    type="button"
-                    onClick={() => setShowReset(true)}
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                disabled={loading}
+          {isLogin && authMode === "email" && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => setIsForgotPassword(true)}
+                className="text-sm text-muted-foreground hover:text-foreground"
               >
-                {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
-              </Button>
-            </form>
-          </TabsContent>
+                Forgot password?
+              </button>
+            </div>
+          )}
 
-          <TabsContent value="phone" className="mt-4">
-            <form onSubmit={handlePhoneAuth} className="space-y-4">
-              <div>
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1234567890"
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="phone-password">Password</Label>
-                <Input
-                  id="phone-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
-                disabled={loading}
-              >
-                {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+          <Button
+            type="submit"
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+            disabled={loading}
+          >
+            {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
+          </Button>
+        </form>
 
         <div className="mt-6 text-center">
           <button
