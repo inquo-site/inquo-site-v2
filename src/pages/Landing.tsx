@@ -159,6 +159,7 @@ const Landing = () => {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="/about" className="hover:text-foreground">About Us</Link></li>
                 <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
+                <li><Link to="/blog" className="hover:text-foreground">Blog</Link></li>
               </ul>
             </div>
             

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import UserManagement from "./admin/UserManagement";
 import ToolManagement from "./admin/ToolManagement";
 import Analytics from "./admin/Analytics";
+import BlogManagement from "./admin/BlogManagement";
 
 interface DashboardStats {
   totalUsers: number;
@@ -159,10 +160,11 @@ const AdminDashboard = () => {
 
         {/* Tabs for Management Sections */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="tools">Tool Management</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="tools">Tools</TabsTrigger>
+            <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -200,6 +202,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="tools">
             <ToolManagement />
+          </TabsContent>
+
+          <TabsContent value="blog">
+            <BlogManagement />
           </TabsContent>
 
           <TabsContent value="analytics">
