@@ -16,6 +16,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -87,11 +89,23 @@ const Auth = () => {
           });
           navigate("/dashboard");
         } else {
+          // Validate passwords match
+          if (password !== confirmPassword) {
+            throw new Error("Passwords do not match");
+          }
+
+          if (password.length < 6) {
+            throw new Error("Password must be at least 6 characters");
+          }
+
           const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
               emailRedirectTo: `${window.location.origin}/dashboard`,
+              data: {
+                full_name: fullName,
+              },
             },
           });
           
@@ -257,6 +271,20 @@ const Auth = () => {
         </div>
 
         <form onSubmit={handleAuth} className="space-y-4">
+          {!isLogin && (
+            <div>
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="John Doe"
+                required
+              />
+            </div>
+          )}
+
           {authMode === "email" ? (
             <div>
               <Label htmlFor="email">Email</Label>
@@ -292,8 +320,24 @@ const Auth = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
+              minLength={6}
             />
           </div>
+
+          {!isLogin && (
+            <div>
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={6}
+              />
+            </div>
+          )}
 
           {isLogin && authMode === "email" && (
             <div className="text-right">
