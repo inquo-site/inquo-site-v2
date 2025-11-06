@@ -117,7 +117,7 @@ const UserManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Email / Phone</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Credits</TableHead>
