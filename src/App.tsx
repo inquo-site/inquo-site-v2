@@ -15,13 +15,8 @@ import Pricing from "./pages/Pricing";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
-import BlogGenerator from "./pages/tools/BlogGenerator";
-import CodeGenerator from "./pages/tools/CodeGenerator";
-import GrammarFixer from "./pages/tools/GrammarFixer";
-import AdCopyWriter from "./pages/tools/AdCopyWriter";
-import TextSummarizer from "./pages/tools/TextSummarizer";
+import DynamicTool from "./pages/tools/DynamicTool";
 import ImageGenerator from "./pages/tools/ImageGenerator";
-import ChatAI from "./pages/tools/ChatAI";
 import NotFound from "./pages/NotFound";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
@@ -47,13 +42,8 @@ const App = () => (
             
             {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/tool/blog" element={<ProtectedRoute><BlogGenerator /></ProtectedRoute>} />
-            <Route path="/tool/code" element={<ProtectedRoute><CodeGenerator /></ProtectedRoute>} />
-            <Route path="/tool/grammar" element={<ProtectedRoute><GrammarFixer /></ProtectedRoute>} />
-            <Route path="/tool/adcopy" element={<ProtectedRoute><AdCopyWriter /></ProtectedRoute>} />
-            <Route path="/tool/summarizer" element={<ProtectedRoute><TextSummarizer /></ProtectedRoute>} />
             <Route path="/tool/image" element={<ProtectedRoute><ImageGenerator /></ProtectedRoute>} />
-            <Route path="/tool/chat" element={<ProtectedRoute><ChatAI /></ProtectedRoute>} />
+            <Route path="/tool/:toolType" element={<ProtectedRoute><DynamicTool /></ProtectedRoute>} />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
