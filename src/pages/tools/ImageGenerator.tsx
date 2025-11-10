@@ -24,8 +24,23 @@ const ImageGenerator = () => {
 
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to use this tool",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("generate-image", {
         body: { prompt },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       });
 
       if (error) throw error;

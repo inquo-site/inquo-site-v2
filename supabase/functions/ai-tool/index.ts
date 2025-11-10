@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,12 +23,75 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { prompt, toolType } = await req.json();
 
     if (!prompt || !toolType) {
       return new Response(
         JSON.stringify({ error: 'Missing prompt or toolType' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get tool info and validate access
+    const { data: tool, error: toolError } = await supabaseClient
+      .from('tools')
+      .select('id, is_premium, credits_cost')
+      .eq('tool_type', toolType)
+      .maybeSingle();
+
+    if (toolError || !tool) {
+      console.error('Tool lookup error:', toolError);
+      return new Response(
+        JSON.stringify({ error: 'Tool not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check premium access if tool is premium
+    if (tool.is_premium) {
+      const { data: hasAccess, error: accessError } = await supabaseClient
+        .rpc('can_access_tool', { _user_id: user.id, _tool_id: tool.id });
+
+      if (accessError || !hasAccess) {
+        return new Response(
+          JSON.stringify({ error: 'Premium subscription required' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // Deduct credits
+    const { data: creditsDeducted, error: creditsError } = await supabaseClient
+      .rpc('deduct_credits', { _user_id: user.id, _amount: tool.credits_cost || 1 });
+
+    if (creditsError || !creditsDeducted) {
+      return new Response(
+        JSON.stringify({ error: 'Insufficient credits' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

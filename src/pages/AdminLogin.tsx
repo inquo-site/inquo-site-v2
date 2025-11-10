@@ -7,6 +7,28 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Shield } from "lucide-react";
+import { z } from "zod";
+
+const adminLoginSchema = z.object({
+  email: z.string().email('Invalid email format').max(255, 'Email too long'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password too long'),
+});
+
+const sanitizeAuthError = (error: any): string => {
+  const errorMap: Record<string, string> = {
+    'Invalid login credentials': 'Invalid email or password',
+    'User not found': 'Invalid email or password',
+    'Email not confirmed': 'Please verify your email address',
+  };
+  
+  for (const [key, value] of Object.entries(errorMap)) {
+    if (error.message?.includes(key)) {
+      return value;
+    }
+  }
+  
+  return 'Authentication failed. Please try again.';
+};
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -20,6 +42,18 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
+      // Validate input
+      const validation = adminLoginSchema.safeParse({ email, password });
+      if (!validation.success) {
+        toast({
+          title: "Validation Error",
+          description: validation.error.issues[0].message,
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -46,9 +80,10 @@ const AdminLogin = () => {
       });
       navigate("/admin/dashboard");
     } catch (error: any) {
+      console.error('Admin login error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: sanitizeAuthError(error),
         variant: "destructive",
       });
     } finally {

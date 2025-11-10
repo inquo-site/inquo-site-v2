@@ -8,6 +8,42 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Mail, Phone } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { z } from "zod";
+
+const emailSchema = z.object({
+  email: z.string().email('Invalid email format').max(255, 'Email too long'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password too long'),
+});
+
+const phoneSchema = z.object({
+  phone: z.string().regex(/^\+[1-9]\d{1,14}$/, 'Invalid phone format (use +country code)').max(15),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password too long'),
+});
+
+const signupEmailSchema = emailSchema.extend({
+  confirmPassword: z.string(),
+  fullName: z.string().min(1, 'Name is required').max(100, 'Name too long'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+const sanitizeAuthError = (error: any): string => {
+  const errorMap: Record<string, string> = {
+    'Invalid login credentials': 'Invalid email or password',
+    'User not found': 'Invalid email or password',
+    'Email not confirmed': 'Please verify your email address',
+    'Invalid email': 'Please enter a valid email address',
+  };
+  
+  for (const [key, value] of Object.entries(errorMap)) {
+    if (error.message?.includes(key)) {
+      return value;
+    }
+  }
+  
+  return 'Authentication failed. Please try again.';
+};
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -74,6 +110,44 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate input
+      if (authMode === "email") {
+        if (isLogin) {
+          const validation = emailSchema.safeParse({ email, password });
+          if (!validation.success) {
+            toast({
+              title: "Validation Error",
+              description: validation.error.issues[0].message,
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        } else {
+          const validation = signupEmailSchema.safeParse({ email, password, confirmPassword, fullName });
+          if (!validation.success) {
+            toast({
+              title: "Validation Error",
+              description: validation.error.issues[0].message,
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        }
+      } else {
+        const validation = phoneSchema.safeParse({ phone, password });
+        if (!validation.success) {
+          toast({
+            title: "Validation Error",
+            description: validation.error.issues[0].message,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       if (authMode === "email") {
         if (isLogin) {
           const { error } = await supabase.auth.signInWithPassword({
@@ -149,9 +223,10 @@ const Auth = () => {
         }
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: sanitizeAuthError(error),
         variant: "destructive",
       });
     } finally {

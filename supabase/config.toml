@@ -1,7 +1,7 @@
 project_id = "jcagwttulyacdehtkocs"
 
 [functions.ai-tool]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-image]
-verify_jwt = false
+verify_jwt = true
