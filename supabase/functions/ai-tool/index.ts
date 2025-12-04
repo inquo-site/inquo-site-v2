@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
@@ -63,16 +64,11 @@ serve(async (req) => {
       .eq('tool_type', toolType)
       .maybeSingle();
 
-    if (toolError || !tool) {
-      console.error('Tool lookup error:', toolError);
-      return new Response(
-        JSON.stringify({ error: 'Tool not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Default credits cost if tool not found in DB
+    const creditsCost = tool?.credits_cost || 2;
 
     // Check premium access if tool is premium
-    if (tool.is_premium) {
+    if (tool?.is_premium) {
       const { data: hasAccess, error: accessError } = await supabaseClient
         .rpc('can_access_tool', { _user_id: user.id, _tool_id: tool.id });
 
@@ -84,9 +80,9 @@ serve(async (req) => {
       }
     }
 
-    // Deduct credits
+    // Deduct credits (2 per generation)
     const { data: creditsDeducted, error: creditsError } = await supabaseClient
-      .rpc('deduct_credits', { _user_id: user.id, _amount: tool.credits_cost || 1 });
+      .rpc('deduct_credits', { _user_id: user.id, _amount: creditsCost });
 
     if (creditsError || !creditsDeducted) {
       return new Response(
@@ -95,34 +91,34 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = TOOL_PROMPTS[toolType] || TOOL_PROMPTS.blog;
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const systemPrompt = TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    if (!OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not configured');
     }
 
-    console.log(`Processing ${toolType} request...`);
+    console.log(`Processing ${toolType} request for user ${user.id}...`);
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
+        max_tokens: 4000,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
+      console.error('OpenAI API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -133,12 +129,12 @@ serve(async (req) => {
       
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: 'Credits exhausted. Please top up your account.' }),
+          JSON.stringify({ error: 'API credits exhausted. Please check your OpenAI account.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      throw new Error(`AI Gateway error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
