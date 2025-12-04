@@ -15,6 +15,12 @@ const TOOL_PROMPTS: Record<string, string> = {
   summarize: "You are an expert at summarizing content. Create a concise summary that captures the key points and main ideas of the text. Make it clear, structured, and easy to understand.",
   image: "You are an expert at creating detailed image descriptions. Based on the user's prompt, create a vivid, detailed description for an AI image generator.",
   chat: "You are a helpful, knowledgeable AI assistant. Provide clear, accurate, and well-structured answers. Use proper formatting with line breaks between paragraphs. Highlight important points and make your responses easy to read and understand.",
+  essay: "You are an expert academic writer. Create a well-structured essay with a clear thesis statement, supporting arguments, evidence, and a strong conclusion. Use formal academic language and proper paragraph structure. Include an introduction, body paragraphs, and conclusion.",
+  email: "You are a professional email writer. Create clear, concise, and professional emails tailored to the specified purpose and audience. Include appropriate greeting, body, and sign-off. Maintain the right tone based on the context (formal, semi-formal, or friendly).",
+  social: "You are a social media expert. Create engaging, platform-optimized content that drives engagement. Include relevant emojis, compelling hooks, and clear calls-to-action. Tailor the content style and length to the specified platform (Instagram, Twitter, LinkedIn, Facebook, TikTok).",
+  product: "You are an expert product copywriter. Create compelling product descriptions that highlight key features, benefits, and unique selling points. Use persuasive language that appeals to the target audience and encourages purchases. Include specifications when relevant.",
+  story: "You are a creative writer. Create engaging, imaginative short stories with vivid descriptions, compelling characters, and interesting plots. Use creative language and narrative techniques to captivate readers. Include dialogue, conflict, and resolution.",
+  hashtags: "You are a social media strategist specializing in hashtag optimization. Generate a mix of popular, niche, and branded hashtags that maximize reach and engagement. Provide hashtags organized by category (trending, niche-specific, branded) with brief explanations of their relevance.",
 };
 
 serve(async (req) => {
@@ -80,7 +86,7 @@ serve(async (req) => {
       }
     }
 
-    // Deduct credits (2 per generation)
+    // Deduct credits
     const { data: creditsDeducted, error: creditsError } = await supabaseClient
       .rpc('deduct_credits', { _user_id: user.id, _amount: creditsCost });
 
