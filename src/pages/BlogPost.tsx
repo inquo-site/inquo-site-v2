@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Eye } from "lucide-react";
+import DOMPurify from 'dompurify';
 import 'react-quill/dist/quill.snow.css';
 
 interface Blog {
@@ -119,7 +120,10 @@ export default function BlogPost() {
 
         <div 
           className="prose prose-lg dark:prose-invert max-w-none ql-editor"
-          dangerouslySetInnerHTML={{ __html: blog.content }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(blog.content, {
+            ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'a', 'img', 'blockquote', 'code', 'pre', 'br', 'span', 'div'],
+            ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'target', 'rel']
+          }) }}
         />
 
         <div className="mt-12 pt-8 border-t">
