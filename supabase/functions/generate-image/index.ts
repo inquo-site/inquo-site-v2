@@ -22,13 +22,17 @@ serve(async (req) => {
       );
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const token = authHeader.replace('Bearer ', '');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+
+    const { data: { user }, error: authError } = await userClient.auth.getUser(token);
     
     if (authError || !user) {
       return new Response(
@@ -36,6 +40,8 @@ serve(async (req) => {
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log(`User authenticated: ${user.id}`);
 
     const { prompt } = await req.json();
 
@@ -47,43 +53,49 @@ serve(async (req) => {
     }
 
     // Deduct credits for image generation (2 credits)
-    const { data: creditsDeducted, error: creditsError } = await supabaseClient
+    const { data: creditsDeducted, error: creditsError } = await adminClient
       .rpc('deduct_credits', { _user_id: user.id, _amount: 2 });
 
     if (creditsError || !creditsDeducted) {
+      console.log('Credits error:', creditsError?.message);
       return new Response(
         JSON.stringify({ error: 'Insufficient credits' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+    console.log(`Credits deducted for user ${user.id}`);
 
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+
+    if (!LOVABLE_API_KEY) {
+      console.error('LOVABLE_API_KEY is not configured');
+      throw new Error('AI service is not configured');
     }
 
-    console.log('Generating image with OpenAI gpt-image-1...');
+    console.log('Generating image with Lovable AI...');
 
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'high',
-        output_format: 'png',
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        modalities: ['image', 'text']
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('Lovable AI API error:', response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -92,14 +104,25 @@ serve(async (req) => {
         );
       }
 
-      throw new Error(`OpenAI API error: ${response.status}`);
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'AI credits exhausted. Please try again later.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      throw new Error(`AI API error: ${response.status}`);
     }
 
     const data = await response.json();
     
-    // gpt-image-1 returns base64 encoded image
-    const imageData = data.data[0].b64_json;
-    const imageUrl = `data:image/png;base64,${imageData}`;
+    // Extract the image from the response
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (!imageUrl) {
+      console.error('No image in response:', JSON.stringify(data));
+      throw new Error('Failed to generate image');
+    }
 
     console.log('Image generated successfully');
 
