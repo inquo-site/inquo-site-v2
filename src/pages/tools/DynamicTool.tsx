@@ -27,28 +27,29 @@ const DynamicTool = () => {
       }
 
       try {
+        // First try exact tool_type match
         const { data, error } = await supabase
           .from('tools')
           .select('id, name, description, tool_type')
           .or(`tool_type.eq.${toolType},route_path.eq./tool/${toolType},route_path.eq./tools/${toolType}`)
-          .maybeSingle();
+          .limit(1)
+          .single();
 
-        if (error) throw error;
-
-        let found = data;
-
-        // Fallback: try matching by name derived from slug if nothing found
-        if (!found && toolType) {
-          const nameGuess = decodeURIComponent(toolType).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
-          const { data: byName } = await supabase
-            .from('tools')
-            .select('id, name, description, tool_type')
-            .ilike('name', nameGuess)
-            .maybeSingle();
-          if (byName) found = byName;
+        if (!error && data) {
+          setTool(data);
+          return;
         }
 
-        setTool(found);
+        // Fallback: try matching by name derived from slug
+        const nameGuess = decodeURIComponent(toolType).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+        const { data: byName } = await supabase
+          .from('tools')
+          .select('id, name, description, tool_type')
+          .ilike('name', nameGuess)
+          .limit(1)
+          .single();
+        
+        setTool(byName || null);
 
       } catch (error: any) {
         console.error('Error fetching tool:', error);
