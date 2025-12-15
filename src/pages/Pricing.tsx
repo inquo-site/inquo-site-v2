@@ -1,56 +1,89 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Sparkles, Zap, Building2, Star, ArrowRight, Users, Shield, BadgeCheck } from "lucide-react";
+import { Check, X, Sparkles, Zap, Building2, Star, ArrowRight, Users, Shield, BadgeCheck, Rocket, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { CountrySelector, getSelectedCountry, isIndianUser } from "@/components/CountrySelector";
 
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(true);
+  const [isIndia, setIsIndia] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<any>(null);
 
-  const plans = [
+  useEffect(() => {
+    const country = getSelectedCountry();
+    setSelectedCountry(country);
+    setIsIndia(isIndianUser());
+  }, []);
+
+  // India pricing (INR)
+  const indiaPlans = [
     {
       name: "Free",
-      subtitle: "Starter",
-      description: "Best for: Students, beginners, personal users",
+      subtitle: "Basic",
+      description: "Best for: Students & beginners",
       price: "₹0",
       period: "forever",
       icon: Sparkles,
       features: [
-        { text: "15 essential AI tools", included: true },
-        { text: "5,000 AI words/month", included: true },
-        { text: "10 image generations/month", included: true },
-        { text: "Basic templates", included: true },
-        { text: "Limited support", included: true },
-        { text: "Commercial use", included: false },
-        { text: "Watermark-free images", included: false },
+        { text: "40-50 basic tools", included: true },
+        { text: "Limited daily usage", included: true },
+        { text: "Ads enabled", included: true },
+        { text: "Login required", included: true },
+        { text: "Basic support", included: true },
+        { text: "Export/Download", included: false },
+        { text: "No watermark", included: false },
         { text: "API access", included: false },
       ],
-      limitations: ["No commercial use", "Watermarked images", "Slow processing during peak hours"],
+      limitations: ["Ads enabled", "Watermarked outputs", "Limited daily usage"],
       cta: "Start Free",
+      popular: false,
+      highlight: false,
+    },
+    {
+      name: "Starter",
+      subtitle: "Individual",
+      description: "Best for: Students & individuals",
+      monthlyPrice: "₹199",
+      yearlyPrice: "₹166",
+      yearlyTotal: "₹1,999/year",
+      savings: "Save ~15%",
+      icon: Rocket,
+      features: [
+        { text: "100+ AI tools", included: true },
+        { text: "Limited AI/automation usage", included: true },
+        { text: "No ads", included: true },
+        { text: "Standard processing speed", included: true },
+        { text: "Email support", included: true },
+        { text: "Export/Download enabled", included: true },
+        { text: "Priority support", included: false },
+        { text: "API access", included: false },
+      ],
+      cta: "Start Free Trial",
       popular: false,
       highlight: false,
     },
     {
       name: "Pro",
       subtitle: "Creator",
-      description: "Best for: Freelancers, YouTubers, content creators",
+      description: "Best for: Creators & freelancers",
       monthlyPrice: "₹499",
       yearlyPrice: "₹416",
       yearlyTotal: "₹4,999/year",
       savings: "Save ₹989/year",
       icon: Zap,
       features: [
-        { text: "160+ AI tools unlocked", included: true },
-        { text: "1,00,000 AI words/month", included: true },
-        { text: "100 image generations/month", included: true },
-        { text: "Blog generator, SEO tools", included: true },
+        { text: "All 160+ AI tools", included: true },
+        { text: "Higher usage limits", included: true },
+        { text: "No ads", included: true },
         { text: "Fast processing", included: true },
-        { text: "All templates access", included: true },
         { text: "Priority support", included: true },
-        { text: "API access", included: false },
+        { text: "Export/Download enabled", included: true },
+        { text: "Basic API access", included: true },
+        { text: "Team access", included: false },
       ],
       cta: "Start Free Trial",
       popular: true,
@@ -58,24 +91,22 @@ const Pricing = () => {
     },
     {
       name: "Business",
-      subtitle: "B2B",
-      description: "Best for: Agencies, startups, small businesses",
-      monthlyPrice: "₹1,999",
-      yearlyPrice: "₹1,666",
-      yearlyTotal: "₹19,999/year",
-      savings: "Save ₹3,989/year",
+      subtitle: "Team",
+      description: "Best for: Startups & agencies",
+      monthlyPrice: "₹999",
+      yearlyPrice: "₹833",
+      yearlyTotal: "₹9,999/year",
+      savings: "Save ₹1,989/year",
       icon: Building2,
       features: [
-        { text: "Unlimited AI tools (all 160+)", included: true },
-        { text: "Unlimited AI words/month", included: true },
-        { text: "Unlimited images/month", included: true },
-        { text: "Multi-user/team access (5 members)", included: true },
+        { text: "Unlimited tool usage", included: true },
+        { text: "Team access (up to 5 users)", included: true },
+        { text: "Advanced API access", included: true },
+        { text: "Bulk processing tools", included: true },
+        { text: "Dedicated support", included: true },
         { text: "Custom templates", included: true },
-        { text: "Dedicated dashboard", included: true },
-        { text: "Advanced SEO toolkit", included: true },
-        { text: "API access for automation", included: true },
-        { text: "ChatGPT-like AI bot for website", included: true },
-        { text: "Email + WhatsApp support", included: true },
+        { text: "White-label option", included: true },
+        { text: "Priority everything", included: true },
       ],
       cta: "Start Free Trial",
       popular: false,
@@ -83,15 +114,121 @@ const Pricing = () => {
     },
   ];
 
-  const comparisonFeatures = [
-    { name: "AI Tools Available", free: "15", pro: "160+", business: "160+ (Unlimited)" },
-    { name: "AI Words/Month", free: "5,000", pro: "1,00,000", business: "Unlimited" },
-    { name: "Image Generations", free: "10/month", pro: "100/month", business: "Unlimited" },
-    { name: "Team Members", free: "1", pro: "1", business: "5" },
-    { name: "API Access", free: "—", pro: "—", business: "✓" },
-    { name: "Custom Templates", free: "—", pro: "Basic", business: "Custom" },
-    { name: "Support", free: "Limited", pro: "Priority Email", business: "Email + WhatsApp" },
-    { name: "Commercial Use", free: "—", pro: "✓", business: "✓" },
+  // International pricing (USD)
+  const internationalPlans = [
+    {
+      name: "Free",
+      subtitle: "Basic",
+      description: "Best for: Students & beginners",
+      price: "$0",
+      period: "forever",
+      icon: Sparkles,
+      features: [
+        { text: "40-50 basic tools", included: true },
+        { text: "Limited daily usage", included: true },
+        { text: "Ads enabled", included: true },
+        { text: "Login required", included: true },
+        { text: "Basic support", included: true },
+        { text: "Export/Download", included: false },
+        { text: "No watermark", included: false },
+        { text: "API access", included: false },
+      ],
+      limitations: ["Ads enabled", "Watermarked outputs", "Limited daily usage"],
+      cta: "Start Free",
+      popular: false,
+      highlight: false,
+    },
+    {
+      name: "Starter",
+      subtitle: "Individual",
+      description: "Best for: Students & individuals",
+      monthlyPrice: "$5",
+      yearlyPrice: "$4",
+      yearlyTotal: "$49/year",
+      savings: "Save ~18%",
+      icon: Rocket,
+      features: [
+        { text: "100+ AI tools", included: true },
+        { text: "Limited AI/automation usage", included: true },
+        { text: "No ads", included: true },
+        { text: "Standard processing speed", included: true },
+        { text: "Email support", included: true },
+        { text: "Export/Download enabled", included: true },
+        { text: "Priority support", included: false },
+        { text: "API access", included: false },
+      ],
+      cta: "Start Free Trial",
+      popular: false,
+      highlight: false,
+    },
+    {
+      name: "Pro",
+      subtitle: "Creator",
+      description: "Best for: Creators & freelancers",
+      monthlyPrice: "$12",
+      yearlyPrice: "$10",
+      yearlyTotal: "$119/year",
+      savings: "Save $25/year",
+      icon: Zap,
+      features: [
+        { text: "All 160+ AI tools", included: true },
+        { text: "Higher usage limits", included: true },
+        { text: "No ads", included: true },
+        { text: "Fast processing", included: true },
+        { text: "Priority support", included: true },
+        { text: "Export/Download enabled", included: true },
+        { text: "Basic API access", included: true },
+        { text: "Team access", included: false },
+      ],
+      cta: "Start Free Trial",
+      popular: true,
+      highlight: true,
+    },
+    {
+      name: "Business",
+      subtitle: "Team",
+      description: "Best for: Startups & agencies",
+      monthlyPrice: "$25",
+      yearlyPrice: "$21",
+      yearlyTotal: "$249/year",
+      savings: "Save $51/year",
+      icon: Building2,
+      features: [
+        { text: "Unlimited tool usage", included: true },
+        { text: "Team access (up to 10 users)", included: true },
+        { text: "Advanced API access", included: true },
+        { text: "Bulk processing tools", included: true },
+        { text: "Dedicated support", included: true },
+        { text: "Custom templates", included: true },
+        { text: "White-label option", included: true },
+        { text: "Priority everything", included: true },
+      ],
+      cta: "Start Free Trial",
+      popular: false,
+      highlight: false,
+    },
+  ];
+
+  const plans = isIndia ? indiaPlans : internationalPlans;
+
+  const comparisonFeatures = isIndia ? [
+    { name: "AI Tools Available", free: "40-50", starter: "100+", pro: "160+", business: "Unlimited" },
+    { name: "Daily Usage", free: "Limited", starter: "Standard", pro: "High", business: "Unlimited" },
+    { name: "Ads", free: "Yes", starter: "No", pro: "No", business: "No" },
+    { name: "Processing Speed", free: "Standard", starter: "Standard", pro: "Fast", business: "Priority" },
+    { name: "Team Members", free: "1", starter: "1", pro: "1", business: "5" },
+    { name: "API Access", free: "—", starter: "—", pro: "Basic", business: "Advanced" },
+    { name: "Support", free: "Limited", starter: "Email", pro: "Priority", business: "Dedicated" },
+    { name: "Export/Download", free: "—", starter: "✓", pro: "✓", business: "✓" },
+  ] : [
+    { name: "AI Tools Available", free: "40-50", starter: "100+", pro: "160+", business: "Unlimited" },
+    { name: "Daily Usage", free: "Limited", starter: "Standard", pro: "High", business: "Unlimited" },
+    { name: "Ads", free: "Yes", starter: "No", pro: "No", business: "No" },
+    { name: "Processing Speed", free: "Standard", starter: "Standard", pro: "Fast", business: "Priority" },
+    { name: "Team Members", free: "1", starter: "1", pro: "1", business: "10" },
+    { name: "API Access", free: "—", starter: "—", pro: "Basic", business: "Advanced" },
+    { name: "Support", free: "Limited", starter: "Email", pro: "Priority", business: "Dedicated" },
+    { name: "White-label", free: "—", starter: "—", pro: "—", business: "✓" },
   ];
 
   const faqs = [
@@ -101,11 +238,13 @@ const Pricing = () => {
     },
     {
       q: "Can I try before I buy?",
-      a: "Yes! We offer a 7-day free trial for Pro & Business plans. No credit card required to start."
+      a: "Yes! We offer a 7-day free trial for Starter, Pro & Business plans. No credit card required to start."
     },
     {
       q: "What payment methods do you accept?",
-      a: "We accept all major credit/debit cards, UPI, Net Banking, and PayPal for international users."
+      a: isIndia 
+        ? "We accept all major credit/debit cards, UPI, Net Banking, and wallets like Paytm, PhonePe, Google Pay."
+        : "We accept all major credit/debit cards, PayPal, and bank transfers for international users."
     },
     {
       q: "Can I switch plans anytime?",
@@ -128,9 +267,15 @@ const Pricing = () => {
     { icon: Zap, text: "Fast global servers" },
   ];
 
+  const handleChangeCountry = () => {
+    localStorage.removeItem("user_country");
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <CountrySelector onSelect={() => setIsIndia(isIndianUser())} />
       
       <div className="pt-28 pb-20 px-4">
         <div className="container mx-auto max-w-7xl">
@@ -140,9 +285,21 @@ const Pricing = () => {
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
               Simple, Transparent <span className="text-gradient">Pricing</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
               No hidden charges. Start free, upgrade when you need more power. Cancel anytime.
             </p>
+
+            {/* Country Display */}
+            {selectedCountry && (
+              <button 
+                onClick={handleChangeCountry}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+              >
+                <Globe className="w-4 h-4" />
+                <span>{selectedCountry.flag} Showing prices for {selectedCountry.name}</span>
+                <span className="underline">(Change)</span>
+              </button>
+            )}
 
             {/* Trust Badges */}
             <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
@@ -172,18 +329,18 @@ const Pricing = () => {
               >
                 Yearly
                 <Badge variant="secondary" className="bg-accent text-accent-foreground text-xs">
-                  Save 17%
+                  Save up to 18%
                 </Badge>
               </button>
             </div>
           </div>
 
           {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
             {plans.map((plan, index) => (
               <Card
                 key={index}
-                className={`p-8 relative transition-all duration-300 hover:shadow-xl ${
+                className={`p-6 relative transition-all duration-300 hover:shadow-xl ${
                   plan.highlight 
                     ? "border-2 border-accent scale-105 shadow-lg bg-gradient-to-b from-accent/5 to-transparent" 
                     : "border-2 hover:border-accent/50"
@@ -198,29 +355,29 @@ const Pricing = () => {
                   </div>
                 )}
 
-                <div className="text-center mb-8">
-                  <div className={`w-14 h-14 mx-auto mb-4 rounded-2xl flex items-center justify-center ${
+                <div className="text-center mb-6">
+                  <div className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center ${
                     plan.highlight ? "bg-accent" : "bg-muted"
                   }`}>
-                    <plan.icon className={`w-7 h-7 ${plan.highlight ? "text-accent-foreground" : "text-foreground"}`} />
+                    <plan.icon className={`w-6 h-6 ${plan.highlight ? "text-accent-foreground" : "text-foreground"}`} />
                   </div>
-                  <h3 className="text-2xl font-bold mb-1">{plan.name}</h3>
-                  <p className="text-sm text-accent font-medium mb-2">{plan.subtitle}</p>
+                  <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+                  <p className="text-xs text-accent font-medium mb-1">{plan.subtitle}</p>
                   <p className="text-xs text-muted-foreground mb-4">{plan.description}</p>
                   
                   <div className="mb-2">
                     {plan.price ? (
                       <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-5xl font-bold">{plan.price}</span>
-                        <span className="text-muted-foreground">/{plan.period}</span>
+                        <span className="text-4xl font-bold">{plan.price}</span>
+                        <span className="text-muted-foreground text-sm">/{plan.period}</span>
                       </div>
                     ) : (
                       <>
                         <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-5xl font-bold">
+                          <span className="text-4xl font-bold">
                             {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
                           </span>
-                          <span className="text-muted-foreground">/month</span>
+                          <span className="text-muted-foreground text-sm">/month</span>
                         </div>
                         {isYearly && plan.yearlyTotal && (
                           <p className="text-xs text-muted-foreground mt-1">
@@ -228,7 +385,7 @@ const Pricing = () => {
                           </p>
                         )}
                         {isYearly && plan.savings && (
-                          <p className="text-sm text-accent font-medium mt-2">
+                          <p className="text-sm text-accent font-medium mt-1">
                             {plan.savings}
                           </p>
                         )}
@@ -237,15 +394,15 @@ const Pricing = () => {
                   </div>
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-2 mb-6">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-3">
+                    <li key={i} className="flex items-start gap-2">
                       {feature.included ? (
-                        <Check className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                        <Check className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                       ) : (
-                        <X className="w-5 h-5 text-muted-foreground/50 flex-shrink-0 mt-0.5" />
+                        <X className="w-4 h-4 text-muted-foreground/50 flex-shrink-0 mt-0.5" />
                       )}
-                      <span className={feature.included ? "text-foreground text-sm" : "text-muted-foreground/50 text-sm"}>
+                      <span className={`text-sm ${feature.included ? "text-foreground" : "text-muted-foreground/50"}`}>
                         {feature.text}
                       </span>
                     </li>
@@ -253,9 +410,9 @@ const Pricing = () => {
                 </ul>
 
                 {plan.limitations && (
-                  <div className="mb-6 p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-medium mb-2">Limitations:</p>
-                    <ul className="text-xs text-muted-foreground space-y-1">
+                  <div className="mb-4 p-2 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground font-medium mb-1">Limitations:</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5">
                       {plan.limitations.map((limit, i) => (
                         <li key={i}>• {limit}</li>
                       ))}
@@ -265,7 +422,7 @@ const Pricing = () => {
 
                 <Link to="/dashboard" className="block">
                   <Button
-                    className={`w-full h-12 text-lg font-semibold ${
+                    className={`w-full h-11 font-semibold ${
                       plan.highlight
                         ? "bg-accent hover:bg-accent/90 text-accent-foreground"
                         : ""
@@ -278,7 +435,7 @@ const Pricing = () => {
                 </Link>
                 
                 {plan.highlight && (
-                  <p className="text-center text-sm text-muted-foreground mt-4">
+                  <p className="text-center text-xs text-muted-foreground mt-3">
                     7-day free trial included
                   </p>
                 )}
@@ -296,6 +453,7 @@ const Pricing = () => {
                     <tr className="border-b bg-muted/50">
                       <th className="text-left p-4 font-semibold">Feature</th>
                       <th className="text-center p-4 font-semibold">Free</th>
+                      <th className="text-center p-4 font-semibold">Starter</th>
                       <th className="text-center p-4 font-semibold bg-accent/10">Pro</th>
                       <th className="text-center p-4 font-semibold">Business</th>
                     </tr>
@@ -305,6 +463,7 @@ const Pricing = () => {
                       <tr key={index} className="border-b last:border-0">
                         <td className="p-4 font-medium">{feature.name}</td>
                         <td className="p-4 text-center text-muted-foreground">{feature.free}</td>
+                        <td className="p-4 text-center text-muted-foreground">{feature.starter}</td>
                         <td className="p-4 text-center bg-accent/5 font-medium">{feature.pro}</td>
                         <td className="p-4 text-center text-muted-foreground">{feature.business}</td>
                       </tr>
