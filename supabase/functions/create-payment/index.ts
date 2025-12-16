@@ -90,10 +90,21 @@ serve(async (req) => {
 
       // Validate and apply promo code if provided
       if (promo_code) {
+        // Validate promo code format: alphanumeric, 3-20 characters
+        const sanitizedCode = String(promo_code).toUpperCase().trim();
+        const promoRegex = /^[A-Z0-9]{3,20}$/;
+        
+        if (!promoRegex.test(sanitizedCode)) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid promo code format. Use 3-20 alphanumeric characters.' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         const { data: promoData, error: promoError } = await adminClient
           .from('promo_codes')
           .select('*')
-          .eq('code', promo_code.toUpperCase().trim())
+          .eq('code', sanitizedCode)
           .eq('is_active', true)
           .single();
 
