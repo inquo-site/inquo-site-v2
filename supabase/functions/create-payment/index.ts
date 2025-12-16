@@ -59,7 +59,7 @@ serve(async (req) => {
 
     console.log(`User authenticated: ${user.id}`);
 
-    const { action, plan_type, billing_cycle, currency, payment_id, utr_number } = await req.json();
+    const { action, plan_type, billing_cycle, currency, payment_id, utr_number, promo_code } = await req.json();
 
     if (action === 'create') {
       // Validate plan type
@@ -83,8 +83,59 @@ serve(async (req) => {
       const validPlan = plan_type as 'starter' | 'pro' | 'business';
       const validCycle = billing_cycle as 'monthly' | 'yearly';
       
-      // Calculate amount from server-side pricing (not user input)
-      const amount = PRICING[validCurrency][validPlan][validCycle];
+      // Calculate base amount from server-side pricing (not user input)
+      let amount = PRICING[validCurrency][validPlan][validCycle];
+      let discountAmount = 0;
+      let appliedPromoCode: string | null = null;
+
+      // Validate and apply promo code if provided
+      if (promo_code) {
+        const { data: promoData, error: promoError } = await adminClient
+          .from('promo_codes')
+          .select('*')
+          .eq('code', promo_code.toUpperCase().trim())
+          .eq('is_active', true)
+          .single();
+
+        if (!promoError && promoData) {
+          // Check expiration
+          if (promoData.expires_at && new Date(promoData.expires_at) < new Date()) {
+            console.log(`Promo code ${promo_code} has expired`);
+          }
+          // Check usage limit
+          else if (promoData.max_uses !== null && promoData.current_uses >= promoData.max_uses) {
+            console.log(`Promo code ${promo_code} has reached max uses`);
+          }
+          // Check applicable plans
+          else if (!promoData.applicable_plans.includes(plan_type)) {
+            console.log(`Promo code ${promo_code} not applicable for ${plan_type}`);
+          }
+          // Check minimum amount (convert to paise/cents for comparison)
+          else if (promoData.min_amount && (amount / 100) < promoData.min_amount) {
+            console.log(`Promo code ${promo_code} requires minimum amount`);
+          }
+          else {
+            // Apply discount
+            if (promoData.discount_type === 'percentage') {
+              discountAmount = Math.round(amount * (promoData.discount_value / 100));
+            } else {
+              // Fixed discount - convert to paise/cents
+              discountAmount = promoData.discount_value * 100;
+            }
+            
+            amount = Math.max(0, amount - discountAmount);
+            appliedPromoCode = promoData.code;
+
+            // Increment promo code usage
+            await adminClient
+              .from('promo_codes')
+              .update({ current_uses: promoData.current_uses + 1 })
+              .eq('id', promoData.id);
+
+            console.log(`Applied promo ${promo_code}: discount ${discountAmount}, final ${amount}`);
+          }
+        }
+      }
 
       console.log(`Creating payment request: ${plan_type} ${billing_cycle} ${validCurrency} = ${amount}`);
 
@@ -115,7 +166,8 @@ serve(async (req) => {
           amount,
           currency: validCurrency,
           billing_cycle,
-          status: 'pending'
+          status: 'pending',
+          admin_notes: appliedPromoCode ? `Promo code: ${appliedPromoCode}, Discount: ${discountAmount / 100}` : null
         })
         .select()
         .single();
@@ -142,7 +194,9 @@ serve(async (req) => {
           display_amount: displayAmount,
           currency: validCurrency,
           plan_type,
-          billing_cycle
+          billing_cycle,
+          promo_applied: appliedPromoCode,
+          discount: discountAmount / 100
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );

@@ -5,13 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Settings, BarChart, LogOut, DollarSign, Activity, CreditCard } from "lucide-react";
+import { Shield, Users, Settings, BarChart, LogOut, DollarSign, Activity, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 import UserManagement from "./admin/UserManagement";
 import ToolManagement from "./admin/ToolManagement";
 import Analytics from "./admin/Analytics";
 import BlogManagement from "./admin/BlogManagement";
 import { PaymentManagement } from "./admin/PaymentManagement";
+import { PromoCodeManagement } from "./admin/PromoCodeManagement";
 
 interface DashboardStats {
   totalUsers: number;
@@ -161,10 +162,11 @@ const AdminDashboard = () => {
 
         {/* Tabs for Management Sections */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="promos">Promo Codes</TabsTrigger>
             <TabsTrigger value="tools">Tools</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -204,6 +206,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="payments">
             <PaymentManagement />
+          </TabsContent>
+
+          <TabsContent value="promos">
+            <PromoCodeManagement />
           </TabsContent>
 
           <TabsContent value="tools">
