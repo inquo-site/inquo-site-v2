@@ -1,8 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Check, Zap, Crown, Infinity } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Crown, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface PremiumModalProps {
   open: boolean;
@@ -11,132 +10,56 @@ interface PremiumModalProps {
 }
 
 export function PremiumModal({ open, onClose, toolName }: PremiumModalProps) {
-  const plans = [
-    {
-      name: "Pro Plan",
-      price: "$25",
-      period: "/month",
-      badge: "Pro User",
-      icon: Zap,
-      features: [
-        "Access All 160 AI Tools (12 Free + 148 Premium) 🔓",
-        "Early Access to new tools",
-        "40 credits/day usage",
-        "Premium AI Models (GPT-4, Gemini, Claude)",
-        "Fast priority support",
-        "Get upcoming versions free"
-      ],
-      cta: "Upgrade to Pro",
-      popular: true
-    },
-    {
-      name: "Yearly Plan",
-      price: "$249",
-      period: "/year",
-      badge: "Yearly Pro",
-      icon: Crown,
-      savings: "Save $51",
-      features: [
-        "Access All 160 AI Tools (12 Free + 148 Premium) 🔓",
-        "Early Access to new & beta tools",
-        "50 credits/day usage",
-        "Premium AI Models + API Access",
-        "Fastest support priority",
-        "Free updates forever"
-      ],
-      cta: "Get Yearly",
-      popular: false
-    },
-    {
-      name: "Lifetime Plan",
-      price: "$1999",
-      period: "one-time",
-      badge: "Lifetime Elite",
-      icon: Infinity,
-      features: [
-        "Unlimited Access to all tools",
-        "∞ Unlimited Credits - no daily limits",
-        "Early Access Forever",
-        "Lifetime Premium Support",
-        "No renewal required",
-        "Pay once, use forever"
-      ],
-      cta: "Go Lifetime",
-      popular: false
-    }
-  ];
+  const navigate = useNavigate();
+
+  const handleViewPlans = () => {
+    onClose();
+    navigate("/pricing");
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-3xl font-bold text-center">
-            Unlock Premium Features
+      <DialogContent className="max-w-md">
+        <DialogHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <Crown className="h-8 w-8 text-primary" />
+          </div>
+          <DialogTitle className="text-2xl font-bold text-center">
+            Upgrade to Premium
           </DialogTitle>
-          <DialogDescription className="text-center text-lg">
+          <DialogDescription className="text-center text-base mt-2">
             {toolName ? (
-              <>Upgrade to access <span className="font-semibold text-foreground">{toolName}</span> and 148 premium tools</>
+              <>
+                <span className="font-semibold text-foreground">{toolName}</span> is a premium tool.
+              </>
             ) : (
-              "Choose the plan that works best for you"
+              "This is a premium feature."
             )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid md:grid-cols-3 gap-6 mt-6">
-          {plans.map((plan) => {
-            const Icon = plan.icon;
-            return (
-              <Card 
-                key={plan.name} 
-                className={`p-6 relative ${plan.popular ? 'border-primary border-2' : ''}`}
-              >
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-                    Most Popular
-                  </Badge>
-                )}
-                {plan.savings && (
-                  <Badge className="absolute -top-3 right-4 bg-green-500">
-                    {plan.savings}
-                  </Badge>
-                )}
-                
-                <div className="text-center mb-6">
-                  <Icon className="w-12 h-12 mx-auto mb-3 text-primary" />
-                  <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline justify-center gap-1 mb-2">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground">{plan.period}</span>
-                  </div>
-                  <Badge variant="outline" className="mt-2">{plan.badge}</Badge>
-                </div>
-
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button 
-                  className="w-full"
-                  variant={plan.popular ? "default" : "outline"}
-                  size="lg"
-                >
-                  {plan.cta}
-                </Button>
-              </Card>
-            );
-          })}
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3 text-sm">
+            <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+            <span>Access to all 160+ AI tools</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+            <span>Higher usage limits & priority support</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <Sparkles className="h-5 w-5 text-primary flex-shrink-0" />
+            <span>Export, download & API access</span>
+          </div>
         </div>
 
-        <div className="mt-6 p-4 bg-muted rounded-lg text-center">
-          <p className="text-sm text-muted-foreground">
-            All premium plans include access to GPT-4, Claude, and Gemini models. 
-            Cancel anytime. No hidden fees.
-          </p>
+        <div className="mt-6 space-y-3">
+          <Button onClick={handleViewPlans} className="w-full" size="lg">
+            View Plans & Pricing
+          </Button>
+          <Button onClick={onClose} variant="ghost" className="w-full">
+            Maybe Later
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
