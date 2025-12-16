@@ -240,8 +240,6 @@ export type Database = {
           images_used: number
           max_daily_credits: number
           plan: Database["public"]["Enums"]["plan_type"]
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           updated_at: string | null
           usage_reset_at: string | null
           user_id: string
@@ -257,8 +255,6 @@ export type Database = {
           images_used?: number
           max_daily_credits?: number
           plan?: Database["public"]["Enums"]["plan_type"]
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           updated_at?: string | null
           usage_reset_at?: string | null
           user_id: string
@@ -274,8 +270,6 @@ export type Database = {
           images_used?: number
           max_daily_credits?: number
           plan?: Database["public"]["Enums"]["plan_type"]
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           updated_at?: string | null
           usage_reset_at?: string | null
           user_id?: string
