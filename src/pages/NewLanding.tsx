@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { EmailPopup } from "@/components/EmailPopup";
+import { PromotionalBanner } from "@/components/PromotionalBanner";
 import { 
   Sparkles, Code2, Palette, TrendingUp, Search, 
   Zap, Shield, ArrowRight, Star, Users, Rocket,
@@ -163,6 +164,7 @@ export default function NewLanding() {
 
   return (
     <div className="min-h-screen bg-background">
+      <PromotionalBanner />
       <Navbar />
 
       {/* Hero Section - B2B Focused */}

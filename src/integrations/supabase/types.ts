@@ -181,6 +181,60 @@ export type Database = {
         }
         Relationships: []
       }
+      promotional_banners: {
+        Row: {
+          background_color: string | null
+          created_at: string | null
+          cta_link: string | null
+          cta_text: string | null
+          description: string | null
+          discount_text: string | null
+          display_order: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          promo_code: string | null
+          starts_at: string | null
+          text_color: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          background_color?: string | null
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          description?: string | null
+          discount_text?: string | null
+          display_order?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          promo_code?: string | null
+          starts_at?: string | null
+          text_color?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          background_color?: string | null
+          created_at?: string | null
+          cta_link?: string | null
+          cta_text?: string | null
+          description?: string | null
+          discount_text?: string | null
+          display_order?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          promo_code?: string | null
+          starts_at?: string | null
+          text_color?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       tools: {
         Row: {
           badge: string | null
