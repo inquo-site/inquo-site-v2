@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Facebook, Twitter, Instagram, Linkedin, Mail, ArrowRight, Sparkles } from "lucide-react";
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, ArrowRight, Sparkles, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -34,10 +34,15 @@ export const Footer = () => {
   ];
 
   const socialLinks = [
-    { icon: Facebook, href: "#", label: "Facebook" },
-    { icon: Twitter, href: "#", label: "Twitter" },
-    { icon: Instagram, href: "#", label: "Instagram" },
-    { icon: Linkedin, href: "#", label: "LinkedIn" },
+    { icon: Instagram, href: "https://www.instagram.com/inquo.site_ai", label: "Instagram" },
+    { icon: Twitter, href: "https://twitter.com/inquosite", label: "Twitter" },
+    { icon: Facebook, href: "https://facebook.com/inquosite", label: "Facebook" },
+    { icon: Linkedin, href: "https://linkedin.com/company/inquosite", label: "LinkedIn" },
+  ];
+
+  const externalLinks = [
+    { name: "Official Blog", href: "https://inquo-site.blogspot.com", external: true },
+    { name: "Instagram", href: "https://www.instagram.com/inquo.site_ai", external: true },
   ];
 
   return (
@@ -164,13 +169,31 @@ export const Footer = () => {
                 </li>
               ))}
             </ul>
-            <div className="mt-6">
+            
+            {/* External Links */}
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <p className="text-xs text-muted-foreground mb-2 font-medium">Follow Us</p>
+              {externalLinks.map((link) => (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-muted-foreground hover:text-accent transition-colors text-sm mb-2"
+                >
+                  {link.name}
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </a>
+              ))}
+            </div>
+            
+            <div className="mt-4">
               <a
-                href="mailto:support@inquo.site"
+                href="mailto:inquo4@gmail.com"
                 className="inline-flex items-center text-muted-foreground hover:text-accent transition-colors text-sm"
               >
                 <Mail className="w-4 h-4 mr-2" />
-                support@inquo.site
+                inquo4@gmail.com
               </a>
             </div>
           </div>

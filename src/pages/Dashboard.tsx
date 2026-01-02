@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { PremiumModal } from "@/components/PremiumModal";
 import { TopBar } from "@/components/TopBar";
 import { PromotionalBanner } from "@/components/PromotionalBanner";
+import { SEOHead } from "@/components/SEOHead";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -95,12 +96,26 @@ const Dashboard = () => {
 
   return (
     <>
+      <SEOHead
+        title="AI Tools Dashboard - 160+ Productivity Tools"
+        description="Access 160+ AI-powered tools for writing, coding, design, and marketing. Text generators, image AI, code assistants, and more. Start free today."
+        keywords="AI tools dashboard, AI productivity tools, text generator, code generator, image AI, marketing AI tools"
+        canonicalUrl="https://inquo.site/dashboard"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "AI Tools Dashboard",
+          description: "160+ AI-powered productivity tools",
+          url: "https://inquo.site/dashboard",
+          numberOfItems: tools.length,
+        }}
+      />
       <PromotionalBanner />
       <TopBar />
-      <div className="min-h-screen p-6">
+      <main className="min-h-screen p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="mb-8">
+          <header className="mb-8">
             <h1 className="text-4xl font-bold mb-2">AI Tools Dashboard</h1>
             <p className="text-muted-foreground">
               {profile?.plan === 'free' ? 
@@ -108,14 +123,14 @@ const Dashboard = () => {
                 `Enjoy unlimited access to all ${tools.length}+ AI tools`
               }
             </p>
-          </div>
+          </header>
 
           {/* Upgrade Banner for Free Users */}
           {profile?.plan === 'free' && (
             <div className="mb-8 p-6 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-xl border border-primary/20">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold mb-1">Unlock {tools.length}+ Premium Tools 🚀</h3>
+                  <h2 className="text-xl font-bold mb-1">Unlock {tools.length}+ Premium Tools 🚀</h2>
                   <p className="text-sm text-muted-foreground">
                     Get unlimited access, more credits, and premium AI models
                   </p>
@@ -128,20 +143,21 @@ const Dashboard = () => {
           )}
 
           {/* Search */}
-          <div className="mb-8">
+          <section className="mb-8" aria-label="Search tools">
             <div className="relative max-w-2xl">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" aria-hidden="true" />
               <Input
                 placeholder="Search for tools..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-12"
+                aria-label="Search AI tools"
               />
             </div>
-          </div>
+          </section>
 
           {/* Categories */}
-          <div className="mb-12">
+          <section className="mb-12" aria-label="Tool categories">
             <h2 className="text-2xl font-semibold mb-4">Categories</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
               {categories.map((category) => (
@@ -151,24 +167,27 @@ const Dashboard = () => {
                     selectedCategory === category.id ? 'border-primary border-2' : ''
                   }`}
                   onClick={() => setSelectedCategory(category.id)}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={selectedCategory === category.id}
                 >
-                  <category.icon className={`w-8 h-8 mb-2 ${category.color}`} />
+                  <category.icon className={`w-8 h-8 mb-2 ${category.color}`} aria-hidden="true" />
                   <h3 className="font-semibold text-sm">{category.name}</h3>
                   <p className="text-xs text-muted-foreground mt-1">{getCategoryCount(category.id)} tools</p>
                 </Card>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* Tools Grid */}
-          <div>
+          <section aria-label="AI tools list">
             <h2 className="text-2xl font-semibold mb-4">
               {selectedCategory === "all" ? "All Tools" : 
                categories.find(c => c.id === selectedCategory)?.name}
             </h2>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" role="status" aria-label="Loading tools"></div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -178,61 +197,63 @@ const Dashboard = () => {
                   const path = tool.route_path && tool.route_path.trim() ? tool.route_path : `/tool/${tool.tool_type}`;
                   
                   return (
-                    <Link 
-                      key={tool.id} 
-                      to={isAccessible ? path : '#'}
-                      onClick={(e) => handleToolClick(tool, e)}
-                    >
-                      <Card className={`glass-card p-6 cursor-pointer hover:scale-105 transition-transform h-full relative ${
-                        !isAccessible ? 'opacity-75' : ''
-                      }`}>
-                        {/* Premium Lock Badge */}
-                        {isPremium && !isAccessible && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="absolute top-3 right-3 bg-yellow-500/20 backdrop-blur-sm p-2 rounded-full">
-                                  <Lock className="w-4 h-4 text-yellow-600" />
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Premium Access Required</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                        
-                        <div className="flex items-start justify-between mb-3">
-                          <h3 className="text-xl font-semibold pr-8">{tool.name}</h3>
-                          <Sparkles className="w-5 h-5 text-accent" />
-                        </div>
-                        
-                        <p className="text-sm text-muted-foreground mb-4">{tool.description}</p>
-                        
-                        <div className="flex items-center justify-between">
-                          <Badge variant={tool.badge === 'free' ? 'outline' : 'default'}>
-                            {tool.badge === 'free' && '🆓 Free'}
-                            {tool.badge === 'premium' && '🔒 Premium'}
-                            {tool.badge === 'new' && '⚡ New'}
-                            {tool.badge === 'early_access' && '⚡ Early Access'}
-                          </Badge>
+                    <article key={tool.id}>
+                      <Link 
+                        to={isAccessible ? path : '#'}
+                        onClick={(e) => handleToolClick(tool, e)}
+                        aria-label={`${tool.name} - ${isAccessible ? 'Open tool' : 'Unlock premium'}`}
+                      >
+                        <Card className={`glass-card p-6 cursor-pointer hover:scale-105 transition-transform h-full relative ${
+                          !isAccessible ? 'opacity-75' : ''
+                        }`}>
+                          {/* Premium Lock Badge */}
+                          {isPremium && !isAccessible && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="absolute top-3 right-3 bg-yellow-500/20 backdrop-blur-sm p-2 rounded-full">
+                                    <Lock className="w-4 h-4 text-yellow-600" aria-hidden="true" />
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Premium Access Required</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
                           
-                          <Button 
-                            variant={isAccessible ? "outline" : "secondary"} 
-                            size="sm"
-                          >
-                            {isAccessible ? 'Try Now' : 'Unlock'}
-                          </Button>
-                        </div>
-                      </Card>
-                    </Link>
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="text-xl font-semibold pr-8">{tool.name}</h3>
+                            <Sparkles className="w-5 h-5 text-accent" aria-hidden="true" />
+                          </div>
+                          
+                          <p className="text-sm text-muted-foreground mb-4">{tool.description}</p>
+                          
+                          <div className="flex items-center justify-between">
+                            <Badge variant={tool.badge === 'free' ? 'outline' : 'default'}>
+                              {tool.badge === 'free' && '🆓 Free'}
+                              {tool.badge === 'premium' && '🔒 Premium'}
+                              {tool.badge === 'new' && '⚡ New'}
+                              {tool.badge === 'early_access' && '⚡ Early Access'}
+                            </Badge>
+                            
+                            <Button 
+                              variant={isAccessible ? "outline" : "secondary"} 
+                              size="sm"
+                            >
+                              {isAccessible ? 'Try Now' : 'Unlock'}
+                            </Button>
+                          </div>
+                        </Card>
+                      </Link>
+                    </article>
                   );
                 })}
               </div>
             )}
-          </div>
+          </section>
         </div>
-      </div>
+      </main>
 
       <PremiumModal 
         open={premiumModalOpen} 

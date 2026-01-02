@@ -8,6 +8,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { EmailPopup } from "@/components/EmailPopup";
 import { PromotionalBanner } from "@/components/PromotionalBanner";
+import { SEOHead } from "@/components/SEOHead";
 import { 
   Sparkles, Code2, Palette, TrendingUp, Search, 
   Zap, Shield, ArrowRight, Star, Users, Rocket,
@@ -164,6 +165,29 @@ export default function NewLanding() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="160+ Free AI Tools for Writing, Images, Coding & More"
+        description="Use 160+ AI tools in one platform. Text, image, code, business, and marketing tools. Fast, powerful and free to try. Trusted by 10,000+ businesses worldwide."
+        keywords="AI tools, free AI website, text generator, image AI, code AI generator, AI platform, chatgpt alternative, free ai tools, ai writing tools, ai image generator, Inquo.site, AI automation"
+        canonicalUrl="https://inquo.site"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "Inquo.Site",
+          applicationCategory: "ProductivityApplication",
+          operatingSystem: "Web Browser",
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "USD",
+          },
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: "4.8",
+            ratingCount: "5000",
+          },
+        }}
+      />
       <PromotionalBanner />
       <Navbar />
 
