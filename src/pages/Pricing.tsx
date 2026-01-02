@@ -9,6 +9,7 @@ import { Footer } from "@/components/Footer";
 import { CountrySelector, getSelectedCountry, isIndianUser } from "@/components/CountrySelector";
 import { PaymentModal } from "@/components/PaymentModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { SEOHead } from "@/components/SEOHead";
 
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(true);
@@ -296,6 +297,12 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Pricing - Affordable AI Tools Plans"
+        description="Choose from Free, Starter, Pro, or Business plans. No hidden charges. 7-day free trial. Access 160+ AI tools for writing, coding, design & marketing."
+        keywords="AI tools pricing, affordable AI, AI subscription plans, Inquo pricing"
+        canonicalUrl="https://inquo.site/pricing"
+      />
       <Navbar />
       <CountrySelector onSelect={() => setIsIndia(isIndianUser())} />
       
