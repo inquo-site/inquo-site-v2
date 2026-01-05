@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, X, Sparkles, Zap, Building2, Star, ArrowRight, Users, Shield, BadgeCheck, Rocket, Globe } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Check, X, Sparkles, Zap, Building2, Star, ArrowRight, Users, Shield, BadgeCheck, Rocket, Globe, HelpCircle, ChevronDown } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -524,14 +525,49 @@ const Pricing = () => {
 
           {/* FAQs */}
           <div className="max-w-3xl mx-auto mb-20">
-            <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-            <div className="space-y-4">
+            <div className="text-center mb-12">
+              <Badge className="mb-4 px-4 py-1">
+                <HelpCircle className="w-3 h-3 mr-1" />
+                FAQs
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                Frequently Asked <span className="text-gradient">Questions</span>
+              </h2>
+              <p className="text-muted-foreground">
+                Everything you need to know about our pricing and plans
+              </p>
+            </div>
+            
+            <Accordion type="single" collapsible className="space-y-4">
               {faqs.map((faq, index) => (
-                <Card key={index} className="p-6">
-                  <h4 className="font-semibold text-lg mb-2">{faq.q}</h4>
-                  <p className="text-muted-foreground">{faq.a}</p>
-                </Card>
+                <AccordionItem 
+                  key={index} 
+                  value={`faq-${index}`}
+                  className="border-2 border-border/50 rounded-xl px-6 bg-card/50 backdrop-blur-sm hover:border-accent/50 transition-all duration-300 data-[state=open]:border-accent data-[state=open]:shadow-lg data-[state=open]:shadow-accent/10"
+                >
+                  <AccordionTrigger className="text-left py-5 hover:no-underline group">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-sm group-data-[state=open]:bg-accent group-data-[state=open]:text-accent-foreground transition-colors">
+                        {index + 1}
+                      </div>
+                      <span className="font-semibold text-lg pr-4">{faq.q}</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-5 pl-12 text-muted-foreground text-base leading-relaxed animate-fade-in">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
               ))}
+            </Accordion>
+            
+            <div className="mt-8 text-center">
+              <p className="text-muted-foreground mb-4">Still have questions?</p>
+              <Button asChild variant="outline" className="gap-2">
+                <Link to="/contact">
+                  Contact Support
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </Button>
             </div>
           </div>
 
