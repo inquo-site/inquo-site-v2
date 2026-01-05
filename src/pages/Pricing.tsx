@@ -10,6 +10,7 @@ import { CountrySelector, getSelectedCountry, isIndianUser } from "@/components/
 import { PaymentModal } from "@/components/PaymentModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEOHead } from "@/components/SEOHead";
+import { PromoPopup } from "@/components/PromoPopup";
 
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(true);
@@ -303,6 +304,7 @@ const Pricing = () => {
         keywords="AI tools pricing, affordable AI, AI subscription plans, Inquo pricing"
         canonicalUrl="https://inquo.site/pricing"
       />
+      <PromoPopup />
       <Navbar />
       <CountrySelector onSelect={() => setIsIndia(isIndianUser())} />
       

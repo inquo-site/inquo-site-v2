@@ -217,30 +217,6 @@ export function BannerManagement() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
-                {/* Preview */}
-                <div 
-                  className="p-4 rounded-lg text-center"
-                  style={{ 
-                    backgroundColor: formData.background_color, 
-                    color: formData.text_color 
-                  }}
-                >
-                  <div className="font-bold">{formData.title || "Banner Title"}</div>
-                  {formData.description && <div className="text-sm opacity-90">{formData.description}</div>}
-                  <div className="flex items-center justify-center gap-2 mt-2">
-                    {formData.discount_text && (
-                      <span className="px-2 py-1 bg-white/20 rounded-full text-xs font-bold">
-                        {formData.discount_text}
-                      </span>
-                    )}
-                    {formData.promo_code && (
-                      <span className="px-2 py-1 bg-white/20 rounded text-xs font-mono">
-                        Code: {formData.promo_code}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <Label>Title *</Label>
@@ -475,10 +451,11 @@ export function BannerManagement() {
       <div className="mt-6 p-4 bg-muted/50 rounded-lg">
         <h4 className="font-semibold mb-2">💡 Tips:</h4>
         <ul className="text-sm text-muted-foreground space-y-1">
-          <li>• Banners appear at the top of all pages for visitors</li>
-          <li>• Users can dismiss banners, but they'll see new ones</li>
+          <li>• Banners appear as a <strong>popup on the Pricing page</strong></li>
+          <li>• Users can dismiss popups, they won't see the same one for 24 hours</li>
           <li>• Use eye-catching colors and compelling copy</li>
           <li>• Link promo codes to the pricing page for conversions</li>
+          <li>• Toggle Active/Inactive to control visibility</li>
           <li>• Contact email for queries: <strong>inquo4@gmail.com</strong></li>
         </ul>
       </div>
