@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { EmailPopup } from "@/components/EmailPopup";
-import { PromotionalBanner } from "@/components/PromotionalBanner";
 import { SEOHead } from "@/components/SEOHead";
 import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 import { ValueProposition } from "@/components/ValueProposition";
@@ -178,7 +177,6 @@ export default function NewLanding() {
           },
         }}
       />
-      <PromotionalBanner />
       <Navbar />
 
       {/* Hero Section - B2B Focused */}

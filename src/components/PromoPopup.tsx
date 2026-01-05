@@ -25,16 +25,10 @@ export const PromoPopup = () => {
   }, []);
 
   const fetchActiveBanner = async () => {
-    // Check if user dismissed this popup recently
-    const dismissed = localStorage.getItem("promo_popup_dismissed");
+    // Check if user has already seen the popup (show only once ever)
+    const dismissed = localStorage.getItem("promo_popup_seen");
     if (dismissed) {
-      const dismissedData = JSON.parse(dismissed);
-      const dismissedTime = new Date(dismissedData.time).getTime();
-      const now = new Date().getTime();
-      // Don't show for 24 hours after dismissal
-      if (now - dismissedTime < 24 * 60 * 60 * 1000) {
-        return;
-      }
+      return;
     }
 
     const { data, error } = await supabase
@@ -57,10 +51,8 @@ export const PromoPopup = () => {
 
   const handleDismiss = () => {
     setIsVisible(false);
-    localStorage.setItem("promo_popup_dismissed", JSON.stringify({
-      time: new Date().toISOString(),
-      bannerId: banner?.id
-    }));
+    // Mark as seen permanently (show only once)
+    localStorage.setItem("promo_popup_seen", "true");
   };
 
   const copyPromoCode = async () => {

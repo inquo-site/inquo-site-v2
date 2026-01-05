@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PremiumModal } from "@/components/PremiumModal";
 import { TopBar } from "@/components/TopBar";
-import { PromotionalBanner } from "@/components/PromotionalBanner";
 import { SEOHead } from "@/components/SEOHead";
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -110,7 +109,6 @@ const Dashboard = () => {
           numberOfItems: tools.length,
         }}
       />
-      <PromotionalBanner />
       <TopBar />
       <main className="min-h-screen p-6">
         <div className="max-w-7xl mx-auto">
