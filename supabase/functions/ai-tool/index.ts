@@ -7,6 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Free tools that don't require authentication
+const FREE_TOOLS = ['blog', 'code', 'grammar', 'adcopy', 'summarize', 'chat', 'notes', 'essay', 'email', 'social', 'product', 'story', 'hashtags', 'paraphrase', 'copywriting'];
+
 const TOOL_PROMPTS: Record<string, string> = {
   // Free tools
   blog: "You are an expert blog writer. Create a well-structured, engaging blog post based on the user's topic. Include an introduction, main points with explanations, and a conclusion. Make it SEO-friendly and easy to read.",
@@ -48,52 +51,6 @@ serve(async (req) => {
   }
 
   try {
-    // Authenticate user
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.log('No authorization header provided');
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Extract the token from the header
-    const token = authHeader.replace('Bearer ', '');
-    
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-
-    // Use service role key to create admin client for RPC calls
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Create user client with the user's token for authentication
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } }
-    });
-
-    // Get the user from the token
-    const { data: { user }, error: authError } = await userClient.auth.getUser(token);
-    
-    if (authError) {
-      console.log('Auth error:', authError.message);
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!user) {
-      console.log('No user found from token');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`User authenticated: ${user.id}`);
-
     const { prompt, toolType } = await req.json();
 
     if (!prompt || !toolType) {
@@ -103,10 +60,38 @@ serve(async (req) => {
       );
     }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+
+    // Use service role key to create admin client for RPC calls
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Check if this is a free tool
+    const isFreeTool = FREE_TOOLS.includes(toolType);
+
+    // Authenticate user if Authorization header is provided
+    const authHeader = req.headers.get('Authorization');
+    let user = null;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } }
+      });
+
+      const { data: { user: authUser }, error: authError } = await userClient.auth.getUser(token);
+      
+      if (!authError && authUser) {
+        user = authUser;
+        console.log(`User authenticated: ${user.id}`);
+      }
+    }
+
     // Get tool info using admin client
     const { data: tool, error: toolError } = await adminClient
       .from('tools')
-      .select('id, is_premium, credits_cost')
+      .select('id, is_premium, credits_cost, is_free_tool')
       .eq('tool_type', toolType)
       .limit(1)
       .maybeSingle();
@@ -115,13 +100,25 @@ serve(async (req) => {
       console.log('Tool fetch error:', toolError.message);
     }
 
+    // Check if tool is actually free (from DB or our FREE_TOOLS list)
+    const toolIsFree = isFreeTool || tool?.is_free_tool === true || tool?.is_premium === false;
+
+    // For premium tools, require authentication
+    if (!toolIsFree && !user) {
+      console.log('Premium tool requires authentication');
+      return new Response(
+        JSON.stringify({ error: 'Login required for premium tools' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Default credits cost if tool not found in DB
     const creditsCost = tool?.credits_cost || 2;
 
-    console.log(`Tool: ${toolType}, Premium: ${tool?.is_premium}, Credits: ${creditsCost}`);
+    console.log(`Tool: ${toolType}, Premium: ${tool?.is_premium}, Free: ${toolIsFree}, User: ${user?.id || 'anonymous'}`);
 
-    // Check premium access if tool is premium
-    if (tool?.is_premium) {
+    // Check premium access if tool is premium and user is logged in
+    if (tool?.is_premium && user) {
       const { data: hasAccess, error: accessError } = await adminClient
         .rpc('can_access_tool', { _user_id: user.id, _tool_id: tool.id });
 
@@ -137,22 +134,26 @@ serve(async (req) => {
       }
     }
 
-    // Deduct credits using admin client
-    const { data: creditsDeducted, error: creditsError } = await adminClient
-      .rpc('deduct_credits', { _user_id: user.id, _amount: creditsCost });
+    // Deduct credits only if user is logged in
+    if (user) {
+      const { data: creditsDeducted, error: creditsError } = await adminClient
+        .rpc('deduct_credits', { _user_id: user.id, _amount: creditsCost });
 
-    if (creditsError) {
-      console.log('Credits deduction error:', creditsError.message);
+      if (creditsError) {
+        console.log('Credits deduction error:', creditsError.message);
+      }
+
+      if (creditsError || !creditsDeducted) {
+        return new Response(
+          JSON.stringify({ error: 'Insufficient credits. Please upgrade your plan.' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`Credits deducted: ${creditsCost} for user ${user.id}`);
+    } else {
+      console.log('Anonymous user using free tool - no credits deducted');
     }
-
-    if (creditsError || !creditsDeducted) {
-      return new Response(
-        JSON.stringify({ error: 'Insufficient credits' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log(`Credits deducted: ${creditsCost} for user ${user.id}`);
 
     const systemPrompt = TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
     
@@ -164,7 +165,7 @@ serve(async (req) => {
       throw new Error('AI service is not configured');
     }
 
-    console.log(`Processing ${toolType} request for user ${user.id}...`);
+    console.log(`Processing ${toolType} request...`);
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -210,7 +211,7 @@ serve(async (req) => {
       throw new Error('No content in AI response');
     }
 
-    console.log(`Successfully processed ${toolType} request for user ${user.id}`);
+    console.log(`Successfully processed ${toolType} request`);
 
     return new Response(
       JSON.stringify({ result }),
