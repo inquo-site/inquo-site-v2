@@ -17,7 +17,7 @@ import {
   Sparkles, Code2, Palette, TrendingUp, Search, 
   Zap, Shield, ArrowRight, Star, Users, Rocket,
   CheckCircle, Clock, Globe, Award, Heart, Target,
-  Building2, Briefcase, UserCheck, BadgeCheck, Play
+  Building2, Briefcase, UserCheck, BadgeCheck
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -106,7 +106,7 @@ export default function NewLanding() {
   ];
 
   const stats = [
-    { icon: Rocket, label: "AI Tools", value: `${toolsCount}+`, color: "text-accent" },
+    { icon: Rocket, label: "AI Tools", value: "160+", color: "text-accent" },
     { icon: Users, label: "Active Businesses", value: "10K+", color: "text-blue-500" },
     { icon: Star, label: "5-Star Reviews", value: "5K+", color: "text-yellow-500" },
     { icon: Globe, label: "Countries", value: "50+", color: "text-green-500" },
@@ -241,25 +241,6 @@ export default function NewLanding() {
               </Button>
             </div>
 
-            {/* Demo Video Placeholder */}
-            <div className="max-w-4xl mx-auto mb-12 animate-fade-in" style={{ animationDelay: '300ms' }}>
-              <div className="relative aspect-video rounded-2xl overflow-hidden border-2 border-border bg-card shadow-2xl group cursor-pointer">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                  <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                    <Play className="w-8 h-8 text-accent-foreground ml-1" />
-                  </div>
-                </div>
-                <img 
-                  src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=675&fit=crop" 
-                  alt="InQuo Platform Demo" 
-                  className="w-full h-full object-cover opacity-50"
-                />
-                <div className="absolute bottom-4 left-4 right-4 text-left">
-                  <p className="text-sm text-muted-foreground">Watch Demo</p>
-                  <p className="text-lg font-semibold">See how businesses automate with InQuo</p>
-                </div>
-              </div>
-            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 max-w-4xl mx-auto">
