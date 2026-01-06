@@ -5,9 +5,11 @@ import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Calendar, Eye, Search, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Eye, Search, TrendingUp, ArrowRight, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { SEOHead } from "@/components/SEOHead";
 
 interface Blog {
   id: string;
@@ -61,6 +63,24 @@ export default function ImprovedBlog() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="AI Blog - Tips, Tutorials & Industry Insights"
+        description="Stay updated with the latest AI tools, tips, and industry insights. Learn how to boost productivity with AI writing, coding, design and marketing tools."
+        keywords="AI blog, AI tutorials, AI tips, productivity tips, AI tools guide, Inquo blog, artificial intelligence"
+        canonicalUrl="https://inquo.site/blog"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          name: "Inquo.Site Blog",
+          description: "AI tips, tutorials, and industry insights",
+          url: "https://inquo.site/blog",
+          publisher: {
+            "@type": "Organization",
+            name: "Inquo.Site",
+            logo: "https://storage.googleapis.com/gpt-engineer-file-uploads/MIvfSCOSy2WREISzTLxXlN5x6j03/uploads/1767330225396-1000021517.jpg"
+          }
+        }}
+      />
       <Navbar />
       
       <div className="pt-24 pb-20 px-4">
@@ -213,6 +233,35 @@ export default function ImprovedBlog() {
               )}
             </>
           )}
+
+          {/* CTA Section - Internal Linking to Pricing */}
+          <section className="mt-20 py-16 px-8 rounded-3xl bg-gradient-to-br from-accent/10 via-primary/5 to-background border-2 border-accent/20 animate-fade-in">
+            <div className="max-w-3xl mx-auto text-center">
+              <Badge className="mb-4 px-4 py-2">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Ready to Get Started?
+              </Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                Try Our <span className="text-gradient">160+ AI Tools</span>
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8">
+                Put what you learned into practice. Access all our AI tools for writing, coding, design, and marketing.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-8">
+                  <Link to="/dashboard">
+                    Explore All Tools
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline" className="px-8">
+                  <Link to="/pricing">
+                    View Pricing Plans
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 
