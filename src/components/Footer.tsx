@@ -45,6 +45,11 @@ export const Footer = () => {
     { name: "Instagram", href: "https://www.instagram.com/inquo.site_ai", external: true },
   ];
 
+  const ourProjects = [
+    { name: "SkillLink", href: "https://skill4u.lovable.app", description: "Find Local Skilled Professionals" },
+    { name: "AgentFlow", href: "https://agentfloww.lovable.app", description: "AI Agents That Work For You" },
+  ];
+
   return (
     <footer className="bg-card border-t border-border">
       {/* Newsletter Section */}
@@ -169,6 +174,23 @@ export const Footer = () => {
                 </li>
               ))}
             </ul>
+            
+            {/* Our Projects */}
+            <div className="mt-4 pt-4 border-t border-border/50">
+              <p className="text-xs text-muted-foreground mb-2 font-medium">Our Projects</p>
+              {ourProjects.map((project) => (
+                <a
+                  key={project.name}
+                  href={project.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-muted-foreground hover:text-accent transition-colors text-sm mb-2"
+                >
+                  {project.name}
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </a>
+              ))}
+            </div>
             
             {/* External Links */}
             <div className="mt-4 pt-4 border-t border-border/50">
