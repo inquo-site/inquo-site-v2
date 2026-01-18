@@ -77,6 +77,27 @@ export default function BlogManagement() {
       .replace(/(^-|-$)/g, '');
   };
 
+  const ensureUniqueSlug = async (baseSlug: string, excludeId?: string): Promise<string> => {
+    let slug = baseSlug;
+    let counter = 1;
+    
+    while (true) {
+      let query = supabase.from('blogs').select('id').eq('slug', slug);
+      if (excludeId) {
+        query = query.neq('id', excludeId);
+      }
+      
+      const { data } = await query.single();
+      
+      if (!data) {
+        return slug;
+      }
+      
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -85,15 +106,18 @@ export default function BlogManagement() {
       return;
     }
 
-    const slug = formData.slug || generateSlug(formData.title);
+    const baseSlug = formData.slug || generateSlug(formData.title);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Ensure slug is unique (exclude current blog if editing)
+      const uniqueSlug = await ensureUniqueSlug(baseSlug, editingBlog?.id);
+
       const blogData = {
         ...formData,
-        slug,
+        slug: uniqueSlug,
         author_id: user.id,
         published_at: formData.published ? new Date().toISOString() : null,
       };
