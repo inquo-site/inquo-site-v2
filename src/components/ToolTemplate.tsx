@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Copy, Download, RefreshCw, Sparkles, Lock, ArrowLeft, ArrowRight, Zap } from "lucide-react";
+import { Copy, Download, RefreshCw, Sparkles, Lock, ArrowLeft, ArrowRight, Zap, Upload, Image, FileText, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SEOHead } from "@/components/SEOHead";
-
 interface ToolTemplateProps {
   title: string;
   description: string;
@@ -33,8 +32,66 @@ const ToolTemplate = ({ title, description, placeholder, toolType, isFree = true
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [relatedTools, setRelatedTools] = useState<RelatedTool[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadedPreviews, setUploadedPreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { user, profile } = useAuth();
+
+  // Handle file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles: File[] = [];
+    const previews: string[] = [];
+
+    files.forEach((file) => {
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: `${file.name} exceeds 10MB limit`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      validFiles.push(file);
+
+      // Create preview for images
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setUploadedPreviews((prev) => [...prev, event.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previews.push("");
+      }
+    });
+
+    setUploadedFiles((prev) => [...prev, ...validFiles]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Remove uploaded file
+  const removeFile = (index: number) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    setUploadedPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
 
   // Fetch related tools
   useEffect(() => {
@@ -70,10 +127,10 @@ const ToolTemplate = ({ title, description, placeholder, toolType, isFree = true
   };
 
   const handleGenerate = async () => {
-    if (!input.trim()) {
+    if (!input.trim() && uploadedFiles.length === 0) {
       toast({
         title: "Input required",
-        description: "Please enter some text to process",
+        description: "Please enter some text or upload a file to process",
         variant: "destructive",
       });
       return;
@@ -101,8 +158,21 @@ const ToolTemplate = ({ title, description, placeholder, toolType, isFree = true
         headers.Authorization = `Bearer ${session.access_token}`;
       }
 
+      // Convert uploaded files to base64
+      const filesData = await Promise.all(
+        uploadedFiles.map(async (file) => ({
+          name: file.name,
+          type: file.type,
+          data: await fileToBase64(file),
+        }))
+      );
+
       const { data, error: fnError } = await supabase.functions.invoke("ai-tool", {
-        body: { prompt: input, toolType },
+        body: { 
+          prompt: input, 
+          toolType,
+          files: filesData.length > 0 ? filesData : undefined
+        },
         headers
       });
 
@@ -220,8 +290,74 @@ const ToolTemplate = ({ title, description, placeholder, toolType, isFree = true
                 placeholder={placeholder}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="min-h-[300px] mb-4"
+                className="min-h-[200px] mb-4"
               />
+
+              {/* File Upload Section */}
+              <div className="mb-4">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept="image/*,.pdf,.doc,.docx,.txt,.csv,.json"
+                  multiple
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full border-dashed border-2 h-16 hover:border-accent hover:bg-accent/5"
+                >
+                  <Upload className="w-5 h-5 mr-2" />
+                  Upload Image or File
+                  <span className="ml-2 text-xs text-muted-foreground">(Max 10MB)</span>
+                </Button>
+
+                {/* Uploaded Files Preview */}
+                {uploadedFiles.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-2 bg-secondary/50 rounded-lg border"
+                      >
+                        {file.type.startsWith("image/") && uploadedPreviews[index] ? (
+                          <img
+                            src={uploadedPreviews[index]}
+                            alt={file.name}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-accent/10 rounded flex items-center justify-center">
+                            {file.type.startsWith("image/") ? (
+                              <Image className="w-6 h-6 text-accent" />
+                            ) : (
+                              <FileText className="w-6 h-6 text-accent" />
+                            )}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <Button
                 onClick={handleGenerate}
                 disabled={loading}
