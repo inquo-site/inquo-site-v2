@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 // Free tools that don't require authentication
@@ -51,11 +51,18 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, toolType } = await req.json();
+    const { prompt, toolType, files } = await req.json();
 
-    if (!prompt || !toolType) {
+    if (!prompt && (!files || files.length === 0)) {
       return new Response(
-        JSON.stringify({ error: 'Missing prompt or toolType' }),
+        JSON.stringify({ error: 'Missing prompt or files' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!toolType) {
+      return new Response(
+        JSON.stringify({ error: 'Missing toolType' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -167,6 +174,73 @@ serve(async (req) => {
 
     console.log(`Processing ${toolType} request...`);
 
+    // Check if we have image files to process
+    const hasImages = files && files.length > 0 && files.some((f: any) => f.type?.startsWith('image/'));
+
+    // Build the user message content
+    let userContent: any;
+
+    if (hasImages) {
+      // Use multimodal format for image analysis
+      userContent = [];
+      
+      // Add text prompt if provided
+      if (prompt) {
+        userContent.push({ type: 'text', text: prompt || 'Analyze this image and describe what you see in detail.' });
+      } else {
+        userContent.push({ type: 'text', text: 'Analyze this image and describe what you see in detail. Provide insights based on the context.' });
+      }
+
+      // Add images
+      for (const file of files) {
+        if (file.type?.startsWith('image/') && file.data) {
+          userContent.push({
+            type: 'image_url',
+            image_url: {
+              url: file.data // Base64 data URL
+            }
+          });
+        }
+      }
+
+      // Add context about non-image files
+      const nonImageFiles = files.filter((f: any) => !f.type?.startsWith('image/'));
+      if (nonImageFiles.length > 0) {
+        const fileList = nonImageFiles.map((f: any) => f.name).join(', ');
+        userContent.push({ type: 'text', text: `\n\nAdditional files attached: ${fileList}` });
+      }
+
+      console.log(`Processing with ${files.filter((f: any) => f.type?.startsWith('image/')).length} images`);
+    } else if (files && files.length > 0) {
+      // Handle non-image files (extract text content if possible)
+      let fileContext = '';
+      for (const file of files) {
+        if (file.data) {
+          // For text-based files, try to extract content
+          if (file.type?.includes('text') || file.type?.includes('json') || file.type?.includes('csv')) {
+            try {
+              const base64Content = file.data.split(',')[1];
+              const decodedContent = atob(base64Content);
+              fileContext += `\n\n--- Content from ${file.name} ---\n${decodedContent}`;
+            } catch (e) {
+              fileContext += `\n\n[File attached: ${file.name}]`;
+            }
+          } else {
+            fileContext += `\n\n[File attached: ${file.name} (${file.type})]`;
+          }
+        }
+      }
+      userContent = (prompt || '') + fileContext;
+    } else {
+      userContent = prompt;
+    }
+
+    // Build enhanced system prompt for image analysis
+    let enhancedSystemPrompt = systemPrompt;
+    if (hasImages) {
+      enhancedSystemPrompt = `${systemPrompt}\n\nYou have been provided with one or more images. Analyze them carefully and incorporate your observations into your response. Be specific about what you see in the images and how it relates to the user's request.`;
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -176,8 +250,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
+          { role: 'system', content: enhancedSystemPrompt },
+          { role: 'user', content: userContent }
         ],
         max_tokens: 4000,
       }),
