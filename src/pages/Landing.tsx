@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Sparkles, Code2, Palette, TrendingUp, GraduationCap, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import BlogCarousel from "@/components/BlogCarousel";
 
 const Landing = () => {
   const [toolsCount, setToolsCount] = useState<number>(160);
@@ -121,6 +122,9 @@ const Landing = () => {
           </div>
         </div>
       </section>
+
+      {/* Blog Carousel Section */}
+      <BlogCarousel />
 
       {/* CTA Section */}
       <section className="py-20 px-4">
