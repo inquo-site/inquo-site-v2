@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Free tools that don't require authentication
-const FREE_TOOLS = ['blog', 'code', 'grammar', 'adcopy', 'summarize', 'chat', 'notes', 'essay', 'email', 'social', 'product', 'story', 'hashtags', 'paraphrase', 'copywriting'];
+const FREE_TOOLS = ['blog', 'code', 'grammar', 'adcopy', 'summarize', 'chat', 'notes', 'essay', 'email', 'social', 'product', 'story', 'hashtags', 'paraphrase', 'copywriting', 'agent-chat'];
 
 const TOOL_PROMPTS: Record<string, string> = {
   // Free tools
@@ -51,7 +51,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, toolType, files } = await req.json();
+    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory } = await req.json();
 
     if (!prompt && (!files || files.length === 0)) {
       return new Response(
@@ -162,7 +162,7 @@ serve(async (req) => {
       console.log('Anonymous user using free tool - no credits deducted');
     }
 
-    const systemPrompt = TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
+    const systemPrompt = customSystemPrompt || TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
     
     // Use Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -241,6 +241,19 @@ serve(async (req) => {
       enhancedSystemPrompt = `${systemPrompt}\n\nYou have been provided with one or more images. Analyze them carefully and incorporate your observations into your response. Be specific about what you see in the images and how it relates to the user's request.`;
     }
 
+    // Build messages array with conversation history if provided
+    let messagesArray: any[] = [{ role: 'system', content: enhancedSystemPrompt }];
+    
+    if (conversationHistory && Array.isArray(conversationHistory)) {
+      // Add conversation history
+      for (const msg of conversationHistory) {
+        messagesArray.push({ role: msg.role, content: msg.content });
+      }
+    }
+    
+    // Add current user message
+    messagesArray.push({ role: 'user', content: userContent });
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -249,10 +262,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: enhancedSystemPrompt },
-          { role: 'user', content: userContent }
-        ],
+        messages: messagesArray,
         max_tokens: 4000,
       }),
     });

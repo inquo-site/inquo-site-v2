@@ -20,6 +20,8 @@ import NotFound from "./pages/NotFound";
 import Blog from "./pages/ImprovedBlog";
 import BlogPost from "./pages/BlogPost";
 import Projects from "./pages/Projects";
+import Agents from "./pages/Agents";
+import AgentChat from "./pages/AgentChat";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,8 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/agents" element={<Agents />} />
+            <Route path="/agent/:agentId" element={<AgentChat />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             
