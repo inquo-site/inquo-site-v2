@@ -12,7 +12,8 @@ import ReactMarkdown from "react-markdown";
 import { 
   Bot, Send, ArrowLeft, Loader2, User, Crown, Sparkles,
   Headphones, Target, Search, TrendingUp, FileText, Users, Scale, 
-  Wrench, DollarSign, Pen, BarChart, Package, Trash2
+  Wrench, DollarSign, Pen, BarChart, Package, Trash2, Copy, Download,
+  CheckCircle2, Zap
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,6 +39,69 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Wrench, DollarSign, Pen, BarChart, Package
 };
 
+const agentTaskSuggestions: Record<string, string[]> = {
+  "Customer Support Agent": [
+    "Draft a response for a customer complaining about late delivery",
+    "Create a FAQ document for our SaaS product returns policy",
+    "Write an apology email for a service outage"
+  ],
+  "Lead Generation Agent": [
+    "Create a 5-email cold outreach sequence for a B2B SaaS product",
+    "Build an ideal customer profile for an AI writing tool",
+    "Generate a lead scoring rubric for our sales team"
+  ],
+  "Research Assistant": [
+    "Write a competitive analysis report on AI content tools",
+    "Research market trends in the Indian EdTech sector for 2026",
+    "Create a comparison matrix of top 5 CRM platforms"
+  ],
+  "Sales Coach": [
+    "Create a sales pitch script for an AI-powered analytics tool",
+    "Build an objection handling playbook for enterprise software",
+    "Write a competitive battle card vs. our top 3 competitors"
+  ],
+  "Content Strategist": [
+    "Create a 30-day content calendar for a tech startup on LinkedIn",
+    "Write 10 Instagram posts for a fitness brand launch",
+    "Generate SEO keyword clusters for 'AI productivity tools'"
+  ],
+  "HR Assistant": [
+    "Draft a job description for a Senior Full Stack Developer",
+    "Create an interview question set for a Product Manager role",
+    "Build a complete employee onboarding checklist"
+  ],
+  "Legal Advisor": [
+    "Draft a freelancer service agreement template",
+    "Create a privacy policy for a mobile app",
+    "Write an NDA template for business partnerships"
+  ],
+  "Technical Support": [
+    "Create a troubleshooting guide for API integration issues",
+    "Write a knowledge base article for password reset flow",
+    "Build a diagnostic checklist for app performance issues"
+  ],
+  "Financial Advisor": [
+    "Create a monthly budget plan for a startup with $50K revenue",
+    "Build an investment comparison analysis: stocks vs mutual funds vs FDs",
+    "Generate a 12-month financial projection for a SaaS business"
+  ],
+  "Creative Writer": [
+    "Write a 1000-word blog post about the future of AI in education",
+    "Create a complete social media campaign for a product launch",
+    "Write a 3-minute video script for a brand story"
+  ],
+  "Data Analyst": [
+    "Create a KPI dashboard framework for an e-commerce business",
+    "Write an analysis report template for monthly sales data",
+    "Build a data-driven marketing strategy document"
+  ],
+  "Product Manager": [
+    "Write a complete PRD for a user notification feature",
+    "Create user stories with acceptance criteria for a checkout flow",
+    "Build a feature prioritization matrix using RICE framework"
+  ],
+};
+
 const AgentChat = () => {
   const { agentId } = useParams();
   const navigate = useNavigate();
@@ -48,13 +112,12 @@ const AgentChat = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (agentId) {
-      fetchAgent();
-    }
+    if (agentId) fetchAgent();
   }, [agentId]);
 
   useEffect(() => {
@@ -62,9 +125,7 @@ const AgentChat = () => {
   }, [messages]);
 
   const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: "smooth" });
   };
 
   const fetchAgent = async () => {
@@ -92,18 +153,12 @@ const AgentChat = () => {
 
   const createConversation = async () => {
     if (!user || !agentId) return null;
-
     try {
       const { data, error } = await supabase
         .from("agent_conversations")
-        .insert({
-          user_id: user.id,
-          agent_id: agentId,
-          title: `Chat with ${agent?.name || "Agent"}`
-        })
+        .insert({ user_id: user.id, agent_id: agentId, title: `Task with ${agent?.name || "Agent"}` })
         .select()
         .single();
-
       if (error) throw error;
       return data.id;
     } catch (error) {
@@ -114,13 +169,7 @@ const AgentChat = () => {
 
   const saveMessage = async (convId: string, role: "user" | "assistant", content: string) => {
     try {
-      await supabase
-        .from("agent_messages")
-        .insert({
-          conversation_id: convId,
-          role,
-          content
-        });
+      await supabase.from("agent_messages").insert({ conversation_id: convId, role, content });
     } catch (error) {
       console.error("Error saving message:", error);
     }
@@ -133,7 +182,6 @@ const AgentChat = () => {
     setInput("");
     setSending(true);
 
-    // Add user message to UI immediately
     const tempUserMsg: Message = {
       id: `temp-${Date.now()}`,
       role: "user",
@@ -143,25 +191,16 @@ const AgentChat = () => {
     setMessages(prev => [...prev, tempUserMsg]);
 
     try {
-      // Create conversation if needed
       let convId = conversationId;
       if (!convId && user) {
         convId = await createConversation();
         setConversationId(convId);
       }
 
-      // Save user message
-      if (convId) {
-        await saveMessage(convId, "user", userMessage);
-      }
+      if (convId) await saveMessage(convId, "user", userMessage);
 
-      // Build message history for context
-      const messageHistory = messages.map(m => ({
-        role: m.role,
-        content: m.content
-      }));
+      const messageHistory = messages.map(m => ({ role: m.role, content: m.content }));
 
-      // Call AI with agent's system prompt
       const response = await supabase.functions.invoke("ai-tool", {
         body: {
           prompt: userMessage,
@@ -175,7 +214,6 @@ const AgentChat = () => {
 
       const assistantContent = response.data?.result || response.data?.content || "I apologize, but I couldn't generate a response. Please try again.";
 
-      // Add assistant message to UI
       const tempAssistantMsg: Message = {
         id: `temp-${Date.now()}-assistant`,
         role: "assistant",
@@ -184,10 +222,7 @@ const AgentChat = () => {
       };
       setMessages(prev => [...prev, tempAssistantMsg]);
 
-      // Save assistant message
-      if (convId) {
-        await saveMessage(convId, "assistant", assistantContent);
-      }
+      if (convId) await saveMessage(convId, "assistant", assistantContent);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to get response. Please try again.");
@@ -210,6 +245,24 @@ const AgentChat = () => {
     toast.success("Chat cleared");
   };
 
+  const copyToClipboard = (content: string, id: string) => {
+    navigator.clipboard.writeText(content);
+    setCopiedId(id);
+    toast.success("Copied to clipboard!");
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const downloadAsFile = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Downloaded!");
+  };
+
   const IconComponent = ({ iconName, className }: { iconName: string; className?: string }) => {
     const Icon = iconMap[iconName] || Bot;
     return <Icon className={className} />;
@@ -223,9 +276,13 @@ const AgentChat = () => {
     );
   }
 
-  if (!agent) {
-    return null;
-  }
+  if (!agent) return null;
+
+  const suggestions = agentTaskSuggestions[agent.name] || [
+    "What can you do for me?",
+    "Help me with a task",
+    "Show me your capabilities"
+  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -245,10 +302,12 @@ const AgentChat = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="font-semibold">{agent.name}</h1>
+                  <Badge variant="outline" className="text-[10px] border-green-500 text-green-600">
+                    <Zap className="w-3 h-3 mr-0.5" /> Autonomous
+                  </Badge>
                   {agent.is_premium && (
                     <Badge variant="secondary" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                      <Crown className="w-3 h-3 mr-1" />
-                      Pro
+                      <Crown className="w-3 h-3 mr-1" /> Pro
                     </Badge>
                   )}
                 </div>
@@ -257,8 +316,7 @@ const AgentChat = () => {
             </div>
             {messages.length > 0 && (
               <Button variant="outline" size="sm" onClick={clearChat}>
-                <Trash2 className="w-4 h-4 mr-1" />
-                Clear
+                <Trash2 className="w-4 h-4 mr-1" /> New Task
               </Button>
             )}
           </div>
@@ -273,23 +331,25 @@ const AgentChat = () => {
               <div className="p-4 bg-primary/10 rounded-2xl mb-4">
                 <IconComponent iconName={agent.icon} className="w-12 h-12 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Chat with {agent.name}</h2>
-              <p className="text-muted-foreground max-w-md mb-6">
-                {agent.description}
+              <h2 className="text-2xl font-bold mb-2">{agent.name}</h2>
+              <p className="text-muted-foreground max-w-md mb-2">{agent.description}</p>
+              <p className="text-sm text-primary font-medium mb-6">
+                Tell me what to do — I'll produce complete, ready-to-use deliverables.
               </p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {["How can you help me?", "What are your capabilities?", "Let's get started!"].map((suggestion) => (
+              <div className="flex flex-col gap-2 w-full max-w-lg">
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Quick Tasks</p>
+                {suggestions.map((suggestion) => (
                   <Button
                     key={suggestion}
                     variant="outline"
-                    size="sm"
+                    className="text-left justify-start h-auto py-3 px-4 whitespace-normal"
                     onClick={() => {
                       setInput(suggestion);
                       textareaRef.current?.focus();
                     }}
                   >
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    {suggestion}
+                    <Zap className="w-4 h-4 mr-2 shrink-0 text-primary" />
+                    <span className="text-sm">{suggestion}</span>
                   </Button>
                 ))}
               </div>
@@ -301,7 +361,7 @@ const AgentChat = () => {
                   key={message.id}
                   className={`flex gap-3 ${message.role === "user" ? "flex-row-reverse" : ""}`}
                 >
-                  <Avatar className={`w-8 h-8 ${message.role === "user" ? "bg-primary" : "bg-primary/10"}`}>
+                  <Avatar className={`w-8 h-8 shrink-0 ${message.role === "user" ? "bg-primary" : "bg-primary/10"}`}>
                     <AvatarFallback className={message.role === "user" ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}>
                       {message.role === "user" ? (
                         <User className="w-4 h-4" />
@@ -310,19 +370,46 @@ const AgentChat = () => {
                       )}
                     </AvatarFallback>
                   </Avatar>
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {message.role === "assistant" ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                  <div className={`max-w-[85%] ${message.role === "user" ? "" : ""}`}>
+                    <div
+                      className={`rounded-2xl px-4 py-3 ${
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
+                    >
+                      {message.role === "assistant" ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                      )}
+                    </div>
+                    {/* Action buttons for assistant messages */}
+                    {message.role === "assistant" && (
+                      <div className="flex gap-2 mt-2 ml-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                          onClick={() => copyToClipboard(message.content, message.id)}
+                        >
+                          {copiedId === message.id ? (
+                            <><CheckCircle2 className="w-3 h-3 text-green-500" /> Copied</>
+                          ) : (
+                            <><Copy className="w-3 h-3" /> Copy</>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                          onClick={() => downloadAsFile(message.content, `${agent.name.replace(/\s+/g, '-').toLowerCase()}-output.md`)}
+                        >
+                          <Download className="w-3 h-3" /> Download
+                        </Button>
                       </div>
-                    ) : (
-                      <p className="whitespace-pre-wrap">{message.content}</p>
                     )}
                   </div>
                 </div>
@@ -335,10 +422,9 @@ const AgentChat = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="bg-muted rounded-2xl px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Working on your task...</span>
                     </div>
                   </div>
                 </div>
@@ -358,7 +444,7 @@ const AgentChat = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`Message ${agent.name}...`}
+              placeholder={`Give ${agent.name} a task...`}
               className="min-h-[52px] max-h-32 resize-none"
               rows={1}
               disabled={sending}
@@ -377,7 +463,7 @@ const AgentChat = () => {
             </Button>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            AI responses may not always be accurate. Verify important information.
+            Agent produces complete deliverables. Copy or download outputs instantly.
           </p>
         </div>
       </div>
