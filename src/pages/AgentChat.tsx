@@ -13,7 +13,7 @@ import {
   Bot, Send, ArrowLeft, Loader2, User, Crown, Sparkles,
   Headphones, Target, Search, TrendingUp, FileText, Users, Scale, 
   Wrench, DollarSign, Pen, BarChart, Package, Trash2, Copy, Download,
-  CheckCircle2, Zap
+  CheckCircle2, Zap, Lock
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -25,6 +25,7 @@ interface Agent {
   system_prompt: string;
   icon: string;
   is_premium: boolean;
+  monthly_price: number;
 }
 
 interface Message {
@@ -113,12 +114,16 @@ const AgentChat = () => {
   const [sending, setSending] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [hasAccess, setHasAccess] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (agentId) fetchAgent();
-  }, [agentId]);
+    if (agentId) {
+      fetchAgent();
+      if (user) checkAccess();
+    }
+  }, [agentId, user]);
 
   useEffect(() => {
     scrollToBottom();
@@ -138,7 +143,10 @@ const AgentChat = () => {
 
       if (error) throw error;
       if (data && data.length > 0) {
-        setAgent(data[0]);
+        const a = data[0] as Agent;
+        setAgent(a);
+        // Free agents (price = 0) are accessible to all
+        if (a.monthly_price === 0) setHasAccess(true);
       } else {
         toast.error("Agent not found");
         navigate("/agents");
@@ -148,6 +156,25 @@ const AgentChat = () => {
       toast.error("Failed to load agent");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkAccess = async () => {
+    if (!user || !agentId) return;
+    try {
+      const { data, error } = await supabase
+        .from("agent_subscriptions")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("agent_id", agentId)
+        .eq("status", "active")
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        setHasAccess(true);
+      }
+    } catch (error) {
+      console.error("Error checking access:", error);
     }
   };
 
@@ -178,6 +205,12 @@ const AgentChat = () => {
   const handleSend = async () => {
     if (!input.trim() || sending) return;
 
+    if (!hasAccess) {
+      toast.error("Please subscribe to this agent to start working");
+      navigate("/agents");
+      return;
+    }
+
     const userMessage = input.trim();
     setInput("");
     setSending(true);
@@ -196,7 +229,6 @@ const AgentChat = () => {
         convId = await createConversation();
         setConversationId(convId);
       }
-
       if (convId) await saveMessage(convId, "user", userMessage);
 
       const messageHistory = messages.map(m => ({ role: m.role, content: m.content }));
@@ -302,12 +334,13 @@ const AgentChat = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="font-semibold">{agent.name}</h1>
-                  <Badge variant="outline" className="text-[10px] border-green-500 text-green-600">
-                    <Zap className="w-3 h-3 mr-0.5" /> Autonomous
-                  </Badge>
-                  {agent.is_premium && (
-                    <Badge variant="secondary" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
-                      <Crown className="w-3 h-3 mr-1" /> Pro
+                  {hasAccess ? (
+                    <Badge variant="outline" className="text-[10px] border-green-500/50 text-green-600">
+                      <Zap className="w-3 h-3 mr-0.5" /> Active
+                    </Badge>
+                  ) : (
+                    <Badge variant="destructive" className="text-[10px]">
+                      <Lock className="w-3 h-3 mr-0.5" /> Locked
                     </Badge>
                   )}
                 </div>
@@ -326,7 +359,20 @@ const AgentChat = () => {
       {/* Chat Area */}
       <div className="flex-1 container mx-auto px-4 max-w-4xl">
         <ScrollArea className="h-[calc(100vh-280px)] py-6">
-          {messages.length === 0 ? (
+          {!hasAccess ? (
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="p-4 bg-destructive/10 rounded-2xl mb-4">
+                <Lock className="w-12 h-12 text-destructive" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Subscribe to {agent.name}</h2>
+              <p className="text-muted-foreground max-w-md mb-6">
+                Get full access to this autonomous agent and all its deliverables.
+              </p>
+              <Button onClick={() => navigate("/agents")} size="lg">
+                <Crown className="w-5 h-5 mr-2" /> View Plans & Subscribe
+              </Button>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="p-4 bg-primary/10 rounded-2xl mb-4">
                 <IconComponent iconName={agent.icon} className="w-12 h-12 text-primary" />
@@ -363,21 +409,11 @@ const AgentChat = () => {
                 >
                   <Avatar className={`w-8 h-8 shrink-0 ${message.role === "user" ? "bg-primary" : "bg-primary/10"}`}>
                     <AvatarFallback className={message.role === "user" ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"}>
-                      {message.role === "user" ? (
-                        <User className="w-4 h-4" />
-                      ) : (
-                        <IconComponent iconName={agent.icon} className="w-4 h-4" />
-                      )}
+                      {message.role === "user" ? <User className="w-4 h-4" /> : <IconComponent iconName={agent.icon} className="w-4 h-4" />}
                     </AvatarFallback>
                   </Avatar>
-                  <div className={`max-w-[85%] ${message.role === "user" ? "" : ""}`}>
-                    <div
-                      className={`rounded-2xl px-4 py-3 ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }`}
-                    >
+                  <div className="max-w-[85%]">
+                    <div className={`rounded-2xl px-4 py-3 ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                       {message.role === "assistant" ? (
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                           <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -386,27 +422,12 @@ const AgentChat = () => {
                         <p className="whitespace-pre-wrap">{message.content}</p>
                       )}
                     </div>
-                    {/* Action buttons for assistant messages */}
                     {message.role === "assistant" && (
                       <div className="flex gap-2 mt-2 ml-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
-                          onClick={() => copyToClipboard(message.content, message.id)}
-                        >
-                          {copiedId === message.id ? (
-                            <><CheckCircle2 className="w-3 h-3 text-green-500" /> Copied</>
-                          ) : (
-                            <><Copy className="w-3 h-3" /> Copy</>
-                          )}
+                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={() => copyToClipboard(message.content, message.id)}>
+                          {copiedId === message.id ? <><CheckCircle2 className="w-3 h-3 text-green-500" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground"
-                          onClick={() => downloadAsFile(message.content, `${agent.name.replace(/\s+/g, '-').toLowerCase()}-output.md`)}
-                        >
+                        <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-muted-foreground hover:text-foreground" onClick={() => downloadAsFile(message.content, `${agent.name.replace(/\s+/g, '-').toLowerCase()}-output.md`)}>
                           <Download className="w-3 h-3" /> Download
                         </Button>
                       </div>
@@ -444,26 +465,17 @@ const AgentChat = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`Give ${agent.name} a task...`}
+              placeholder={hasAccess ? `Give ${agent.name} a task...` : "Subscribe to start working with this agent"}
               className="min-h-[52px] max-h-32 resize-none"
               rows={1}
-              disabled={sending}
+              disabled={sending || !hasAccess}
             />
-            <Button 
-              onClick={handleSend} 
-              disabled={!input.trim() || sending}
-              size="icon"
-              className="h-[52px] w-[52px]"
-            >
-              {sending ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
-              )}
+            <Button onClick={handleSend} disabled={!input.trim() || sending || !hasAccess} size="icon" className="h-[52px] w-[52px]">
+              {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            Agent produces complete deliverables. Copy or download outputs instantly.
+            {hasAccess ? "Agent produces complete deliverables. Copy or download outputs instantly." : "Subscribe to unlock this agent's capabilities."}
           </p>
         </div>
       </div>

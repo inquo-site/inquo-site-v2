@@ -81,6 +81,50 @@ export type Database = {
           },
         ]
       }
+      agent_subscriptions: {
+        Row: {
+          agent_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          purchase_type: string
+          starts_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          purchase_type?: string
+          starts_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          purchase_type?: string
+          starts_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_subscriptions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agents: {
         Row: {
           category: string
@@ -91,9 +135,15 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_premium: boolean | null
+          monthly_price: number | null
           name: string
+          one_time_price: number | null
           system_prompt: string
           updated_at: string
+          usd_monthly_price: number | null
+          usd_one_time_price: number | null
+          usd_yearly_price: number | null
+          yearly_price: number | null
         }
         Insert: {
           category?: string
@@ -104,9 +154,15 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_premium?: boolean | null
+          monthly_price?: number | null
           name: string
+          one_time_price?: number | null
           system_prompt: string
           updated_at?: string
+          usd_monthly_price?: number | null
+          usd_one_time_price?: number | null
+          usd_yearly_price?: number | null
+          yearly_price?: number | null
         }
         Update: {
           category?: string
@@ -117,9 +173,15 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_premium?: boolean | null
+          monthly_price?: number | null
           name?: string
+          one_time_price?: number | null
           system_prompt?: string
           updated_at?: string
+          usd_monthly_price?: number | null
+          usd_one_time_price?: number | null
+          usd_yearly_price?: number | null
+          yearly_price?: number | null
         }
         Relationships: []
       }
