@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Users, Settings, BarChart, LogOut, DollarSign, Activity, Tag, Megaphone } from "lucide-react";
+import { Shield, Users, Settings, BarChart, LogOut, DollarSign, Activity, Tag, Megaphone, Bot } from "lucide-react";
 import { useEffect, useState } from "react";
 import UserManagement from "./admin/UserManagement";
 import ToolManagement from "./admin/ToolManagement";
@@ -14,6 +14,7 @@ import BlogManagement from "./admin/BlogManagement";
 import { PaymentManagement } from "./admin/PaymentManagement";
 import { PromoCodeManagement } from "./admin/PromoCodeManagement";
 import { BannerManagement } from "./admin/BannerManagement";
+import { AgentSubscriptionManagement } from "./admin/AgentSubscriptionManagement";
 
 interface DashboardStats {
   totalUsers: number;
@@ -163,10 +164,11 @@ const AdminDashboard = () => {
 
         {/* Tabs for Management Sections */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-9">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="promos">Promos</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
             <TabsTrigger value="tools">Tools</TabsTrigger>
@@ -208,6 +210,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="payments">
             <PaymentManagement />
+          </TabsContent>
+
+          <TabsContent value="agents">
+            <AgentSubscriptionManagement />
           </TabsContent>
 
           <TabsContent value="promos">
