@@ -262,6 +262,7 @@ export type Database = {
       payment_requests: {
         Row: {
           admin_notes: string | null
+          agent_id: string | null
           amount: number
           billing_cycle: string
           created_at: string
@@ -277,6 +278,7 @@ export type Database = {
         }
         Insert: {
           admin_notes?: string | null
+          agent_id?: string | null
           amount: number
           billing_cycle: string
           created_at?: string
@@ -292,6 +294,7 @@ export type Database = {
         }
         Update: {
           admin_notes?: string | null
+          agent_id?: string | null
           amount?: number
           billing_cycle?: string
           created_at?: string
@@ -305,7 +308,15 @@ export type Database = {
           verified_at?: string | null
           verified_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_requests_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promo_codes: {
         Row: {

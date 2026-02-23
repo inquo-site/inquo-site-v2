@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { AgentPaymentModal } from "@/components/AgentPaymentModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,9 @@ const Agents = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showPricing, setShowPricing] = useState(false);
   const [subscribedAgentIds, setSubscribedAgentIds] = useState<Set<string>>(new Set());
+  const [paymentAgent, setPaymentAgent] = useState<Agent | null>(null);
+  const [paymentType, setPaymentType] = useState<'monthly' | 'yearly' | 'lifetime'>('monthly');
+  const [showPayment, setShowPayment] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -130,9 +134,10 @@ const Agents = () => {
       navigate("/auth");
       return;
     }
-    // Navigate to pricing/payment with agent info
-    navigate(`/pricing?agent=${agent.id}&type=${type}`);
     setShowPricing(false);
+    setPaymentAgent(agent);
+    setPaymentType(type);
+    setShowPayment(true);
   };
 
   const formatPrice = (agent: Agent, field: "monthly" | "yearly" | "one_time") => {
@@ -358,6 +363,21 @@ const Agents = () => {
           )}
         </DialogContent>
       </Dialog>
+
+
+      {/* Agent Payment Modal */}
+      {paymentAgent && (
+        <AgentPaymentModal
+          open={showPayment}
+          onClose={() => {
+            setShowPayment(false);
+            setPaymentAgent(null);
+            fetchSubscriptions();
+          }}
+          agent={paymentAgent}
+          purchaseType={paymentType}
+        />
+      )}
 
       <Footer />
     </div>

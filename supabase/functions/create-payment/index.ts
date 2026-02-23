@@ -9,7 +9,7 @@ const corsHeaders = {
 // HARDCODED UPI ID - Cannot be changed by users
 const FIXED_UPI_ID = "webcraftmaster915@okicici";
 
-// Pricing configuration (in paise for INR, cents for USD)
+// Platform plan pricing (in paise for INR, cents for USD)
 const PRICING = {
   INR: {
     starter: { monthly: 19900, yearly: 199900 },
@@ -24,7 +24,6 @@ const PRICING = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -59,44 +58,81 @@ serve(async (req) => {
 
     console.log(`User authenticated: ${user.id}`);
 
-    const { action, plan_type, billing_cycle, currency, payment_id, utr_number, promo_code } = await req.json();
+    const { action, plan_type, billing_cycle, currency, payment_id, utr_number, promo_code, agent_id } = await req.json();
 
     if (action === 'create') {
-      // Validate plan type
-      if (!['starter', 'pro', 'business'].includes(plan_type)) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid plan type' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Validate billing cycle
-      if (!['monthly', 'yearly'].includes(billing_cycle)) {
-        return new Response(
-          JSON.stringify({ error: 'Invalid billing cycle' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Validate currency
       const validCurrency: 'INR' | 'USD' = currency === 'INR' ? 'INR' : 'USD';
-      const validPlan = plan_type as 'starter' | 'pro' | 'business';
-      const validCycle = billing_cycle as 'monthly' | 'yearly';
-      
-      // Calculate base amount from server-side pricing (not user input)
-      let amount = PRICING[validCurrency][validPlan][validCycle];
+      let amount = 0;
+      let isAgentPurchase = false;
+      let agentName = '';
+
+      // Agent purchase flow
+      if (agent_id) {
+        isAgentPurchase = true;
+        
+        if (!['monthly', 'yearly', 'lifetime'].includes(billing_cycle)) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid billing cycle for agent' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Fetch agent pricing from DB (server-side, not user input)
+        const { data: agent, error: agentError } = await adminClient
+          .from('ai_agents')
+          .select('name, monthly_price, yearly_price, one_time_price, usd_monthly_price, usd_yearly_price, usd_one_time_price')
+          .eq('id', agent_id)
+          .eq('is_active', true)
+          .single();
+
+        if (agentError || !agent) {
+          return new Response(
+            JSON.stringify({ error: 'Agent not found' }),
+            { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        agentName = agent.name;
+        const priceMap = {
+          monthly: validCurrency === 'INR' ? agent.monthly_price : agent.usd_monthly_price,
+          yearly: validCurrency === 'INR' ? agent.yearly_price : agent.usd_yearly_price,
+          lifetime: validCurrency === 'INR' ? agent.one_time_price : agent.usd_one_time_price,
+        };
+        // Agent prices stored in whole units (rupees/dollars), convert to paise/cents
+        amount = (priceMap[billing_cycle as keyof typeof priceMap] || 0) * 100;
+
+      } else {
+        // Platform plan purchase flow
+        if (!['starter', 'pro', 'business'].includes(plan_type)) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid plan type' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        if (!['monthly', 'yearly'].includes(billing_cycle)) {
+          return new Response(
+            JSON.stringify({ error: 'Invalid billing cycle' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const validPlan = plan_type as 'starter' | 'pro' | 'business';
+        const validCycle = billing_cycle as 'monthly' | 'yearly';
+        amount = PRICING[validCurrency][validPlan][validCycle];
+      }
+
       let discountAmount = 0;
       let appliedPromoCode: string | null = null;
 
       // Validate and apply promo code if provided
       if (promo_code) {
-        // Validate promo code format: alphanumeric, 3-20 characters
         const sanitizedCode = String(promo_code).toUpperCase().trim();
         const promoRegex = /^[A-Z0-9]{3,20}$/;
         
         if (!promoRegex.test(sanitizedCode)) {
           return new Response(
-            JSON.stringify({ error: 'Invalid promo code format. Use 3-20 alphanumeric characters.' }),
+            JSON.stringify({ error: 'Invalid promo code format.' }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
@@ -109,35 +145,26 @@ serve(async (req) => {
           .single();
 
         if (!promoError && promoData) {
-          // Check expiration
+          const validForPlan = isAgentPurchase || promoData.applicable_plans.includes(plan_type);
+          
           if (promoData.expires_at && new Date(promoData.expires_at) < new Date()) {
             console.log(`Promo code ${promo_code} has expired`);
-          }
-          // Check usage limit
-          else if (promoData.max_uses !== null && promoData.current_uses >= promoData.max_uses) {
+          } else if (promoData.max_uses !== null && promoData.current_uses >= promoData.max_uses) {
             console.log(`Promo code ${promo_code} has reached max uses`);
-          }
-          // Check applicable plans
-          else if (!promoData.applicable_plans.includes(plan_type)) {
-            console.log(`Promo code ${promo_code} not applicable for ${plan_type}`);
-          }
-          // Check minimum amount (convert to paise/cents for comparison)
-          else if (promoData.min_amount && (amount / 100) < promoData.min_amount) {
+          } else if (!validForPlan) {
+            console.log(`Promo code ${promo_code} not applicable`);
+          } else if (promoData.min_amount && (amount / 100) < promoData.min_amount) {
             console.log(`Promo code ${promo_code} requires minimum amount`);
-          }
-          else {
-            // Apply discount
+          } else {
             if (promoData.discount_type === 'percentage') {
               discountAmount = Math.round(amount * (promoData.discount_value / 100));
             } else {
-              // Fixed discount - convert to paise/cents
               discountAmount = promoData.discount_value * 100;
             }
             
             amount = Math.max(0, amount - discountAmount);
             appliedPromoCode = promoData.code;
 
-            // Increment promo code usage
             await adminClient
               .from('promo_codes')
               .update({ current_uses: promoData.current_uses + 1 })
@@ -148,7 +175,7 @@ serve(async (req) => {
         }
       }
 
-      console.log(`Creating payment request: ${plan_type} ${billing_cycle} ${validCurrency} = ${amount}`);
+      console.log(`Creating payment: ${isAgentPurchase ? 'agent ' + agent_id : plan_type} ${billing_cycle} ${validCurrency} = ${amount}`);
 
       // Check for existing pending payment
       const { data: existingPayment } = await adminClient
@@ -169,17 +196,26 @@ serve(async (req) => {
       }
 
       // Create payment request
+      const insertData: Record<string, unknown> = {
+        user_id: user.id,
+        plan_type: isAgentPurchase ? `agent_${billing_cycle}` : plan_type,
+        amount,
+        currency: validCurrency,
+        billing_cycle,
+        status: 'pending',
+        admin_notes: [
+          appliedPromoCode ? `Promo: ${appliedPromoCode}, Discount: ${discountAmount / 100}` : null,
+          isAgentPurchase ? `Agent: ${agentName}` : null,
+        ].filter(Boolean).join(' | ') || null,
+      };
+
+      if (isAgentPurchase) {
+        insertData.agent_id = agent_id;
+      }
+
       const { data: payment, error: paymentError } = await adminClient
         .from('payment_requests')
-        .insert({
-          user_id: user.id,
-          plan_type,
-          amount,
-          currency: validCurrency,
-          billing_cycle,
-          status: 'pending',
-          admin_notes: appliedPromoCode ? `Promo code: ${appliedPromoCode}, Discount: ${discountAmount / 100}` : null
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -191,7 +227,6 @@ serve(async (req) => {
         );
       }
 
-      // Return payment details with UPI info
       const displayAmount = validCurrency === 'INR' 
         ? `₹${(amount / 100).toFixed(2)}`
         : `$${(amount / 100).toFixed(2)}`;
@@ -204,10 +239,12 @@ serve(async (req) => {
           amount: amount / 100,
           display_amount: displayAmount,
           currency: validCurrency,
-          plan_type,
+          plan_type: isAgentPurchase ? `agent_${billing_cycle}` : plan_type,
           billing_cycle,
           promo_applied: appliedPromoCode,
-          discount: discountAmount / 100
+          discount: discountAmount / 100,
+          is_agent_purchase: isAgentPurchase,
+          agent_name: agentName || undefined,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -221,7 +258,6 @@ serve(async (req) => {
         );
       }
 
-      // Validate UTR format (12-22 alphanumeric characters typically)
       const utrRegex = /^[A-Za-z0-9]{10,30}$/;
       if (!utrRegex.test(utr_number.trim())) {
         return new Response(
@@ -230,7 +266,6 @@ serve(async (req) => {
         );
       }
 
-      // Verify the payment belongs to the user and is pending
       const { data: payment, error: fetchError } = await adminClient
         .from('payment_requests')
         .select('*')
@@ -246,12 +281,11 @@ serve(async (req) => {
         );
       }
 
-      // Update payment with UTR
       const { error: updateError } = await adminClient
         .from('payment_requests')
         .update({ 
           utr_number: utr_number.trim().toUpperCase(),
-          status: 'pending' // Keep pending until admin verifies
+          status: 'pending'
         })
         .eq('id', payment_id);
 
@@ -275,11 +309,8 @@ serve(async (req) => {
     }
 
     if (action === 'get_upi_details') {
-      // Just return the UPI ID without creating a payment
       return new Response(
-        JSON.stringify({
-          upi_id: FIXED_UPI_ID
-        }),
+        JSON.stringify({ upi_id: FIXED_UPI_ID }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
