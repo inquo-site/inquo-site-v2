@@ -17,7 +17,8 @@ import {
   Sparkles, Code2, Palette, TrendingUp, Search, 
   Zap, Shield, ArrowRight, Star, Users, Rocket,
   CheckCircle, Clock, Globe, Award, Heart, Target,
-  Building2, Briefcase, UserCheck, BadgeCheck
+  Building2, Briefcase, UserCheck, BadgeCheck, Bot,
+  Headphones, FileText, Scale, Wrench, DollarSign, Pen, BarChart, Package
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,6 +27,7 @@ export default function NewLanding() {
   const [toolsCount, setToolsCount] = useState(0);
   const [freeTools, setFreeTools] = useState(0);
   const [trendingTools, setTrendingTools] = useState<any[]>([]);
+  const [agents, setAgents] = useState<any[]>([]);
   const [showEmailPopup, setShowEmailPopup] = useState(false);
   
   // A/B Testing hooks
@@ -35,6 +37,7 @@ export default function NewLanding() {
   useEffect(() => {
     fetchStats();
     fetchTrendingTools();
+    fetchAgents();
     
     // Show email popup after 5 seconds
     const timer = setTimeout(() => {
@@ -68,6 +71,21 @@ export default function NewLanding() {
       .limit(6);
     
     setTrendingTools(data || []);
+  };
+
+  const fetchAgents = async () => {
+    const { data } = await supabase
+      .from('ai_agents')
+      .select('id, name, description, category, icon, is_premium, monthly_price, usd_monthly_price')
+      .eq('is_active', true)
+      .order('display_order')
+      .limit(6);
+    setAgents(data || []);
+  };
+
+  const agentIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    Bot, Headphones, Target, Search: Search as any, TrendingUp, FileText, Users, Scale,
+    Wrench, DollarSign, Pen, BarChart, Package
   };
 
   const mainCategories = [
@@ -401,6 +419,67 @@ export default function NewLanding() {
                       </p>
                       <Button variant="outline" size="sm" className="w-full group-hover:bg-accent group-hover:text-accent-foreground group-hover:border-accent transition-colors">
                         Try Now <ArrowRight className="ml-2 w-4 h-4" />
+                      </Button>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* AI Agents Section */}
+      {agents.length > 0 && (
+        <section className="py-24 px-4 bg-muted/30">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4">
+              <div>
+                <Badge className="mb-4 px-4 py-1" variant="secondary">
+                  <Bot className="w-3 h-3 mr-1" /> AI Agents
+                </Badge>
+                <h2 className="text-3xl sm:text-4xl font-bold mb-2">
+                  AI Agents That <span className="text-gradient">Do Real Work</span>
+                </h2>
+                <p className="text-lg text-muted-foreground">
+                  Autonomous AI workers that produce complete deliverables for your business
+                </p>
+              </div>
+              <Button asChild variant="outline" size="lg">
+                <Link to="/agents">
+                  View All Agents
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Link>
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {agents.map((agent, index) => {
+                const AgentIcon = agentIconMap[agent.icon] || Bot;
+                const isINR = !localStorage.getItem("selectedCountry") || localStorage.getItem("selectedCountry") === "IN";
+                const price = isINR ? agent.monthly_price : agent.usd_monthly_price;
+                const symbol = isINR ? "₹" : "$";
+                const isFree = price === 0;
+
+                return (
+                  <Link key={agent.id} to="/agents">
+                    <Card className="p-6 h-full hover:scale-[1.02] transition-all duration-300 cursor-pointer hover:shadow-xl border-2 hover:border-primary/50 animate-fade-in group relative overflow-hidden"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
+                      
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+                          <AgentIcon className="w-6 h-6 text-primary" />
+                        </div>
+                        <Badge variant={isFree ? 'outline' : 'default'} className="font-medium text-xs">
+                          {isFree ? '🆓 Free' : `${symbol}${price?.toLocaleString()}/mo`}
+                        </Badge>
+                      </div>
+                      <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">{agent.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{agent.description}</p>
+                      <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors">
+                        <Briefcase className="w-4 h-4 mr-2" /> Start Work <ArrowRight className="ml-2 w-4 h-4" />
                       </Button>
                     </Card>
                   </Link>

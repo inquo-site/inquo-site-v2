@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Sparkles, Code2, Palette, TrendingUp, Filter, Zap, Lock, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Search, Sparkles, Code2, Palette, TrendingUp, Filter, Zap, Lock, ArrowRight, Bot, Briefcase, Headphones, Target, FileText, Users, Scale, Wrench, DollarSign, Pen, BarChart, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PremiumModal } from "@/components/PremiumModal";
@@ -29,10 +28,11 @@ export default function ImprovedDashboard() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("category") || "all");
   const [tools, setTools] = useState<Tool[]>([]);
+  const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [selectedTool, setSelectedTool] = useState<string>("");
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
 
   const mainCategories = [
     { id: "all", name: "All Tools", icon: Sparkles, color: "text-primary", gradient: "from-blue-500 to-cyan-500" },
@@ -44,6 +44,7 @@ export default function ImprovedDashboard() {
 
   useEffect(() => {
     fetchTools();
+    fetchAgents();
   }, []);
 
   useEffect(() => {
@@ -70,6 +71,21 @@ export default function ImprovedDashboard() {
       setTools(data || []);
     }
     setLoading(false);
+  };
+
+  const fetchAgents = async () => {
+    const { data } = await supabase
+      .from('ai_agents')
+      .select('id, name, description, category, icon, is_premium, monthly_price, usd_monthly_price')
+      .eq('is_active', true)
+      .order('display_order')
+      .limit(4);
+    setAgents(data || []);
+  };
+
+  const agentIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    Bot, Headphones, Target, Search: Search as any, TrendingUp, FileText, Users, Scale,
+    Wrench, DollarSign, Pen, BarChart, Package
   };
 
   const filteredTools = tools.filter(tool => {
@@ -145,6 +161,41 @@ export default function ImprovedDashboard() {
                 </Button>
               </div>
             </Card>
+          )}
+
+          {/* AI Agents Section */}
+          {agents.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Bot className="w-5 h-5 text-primary" /> AI Agents
+                </h2>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/agents">View All <ArrowRight className="ml-1 w-4 h-4" /></Link>
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {agents.map((agent) => {
+                  const AgentIcon = agentIconMap[agent.icon] || Bot;
+                  return (
+                    <Link key={agent.id} to={`/agent/${agent.id}`}>
+                      <Card className="p-4 hover:scale-[1.02] transition-all hover:shadow-lg hover:border-primary/50 group cursor-pointer h-full">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                            <AgentIcon className="w-5 h-5 text-primary" />
+                          </div>
+                          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors line-clamp-1">{agent.name}</h3>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{agent.description}</p>
+                        <Button variant="ghost" size="sm" className="w-full text-xs text-primary">
+                          <Briefcase className="w-3 h-3 mr-1" /> Start Work
+                        </Button>
+                      </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {/* Search */}
