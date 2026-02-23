@@ -122,35 +122,68 @@ export const PaymentManagement = () => {
 
       if (paymentError) throw paymentError;
 
-      // Update user plan
-      const planMap: Record<string, 'free' | 'pro' | 'yearly' | 'lifetime'> = {
-        'starter': 'pro',
-        'pro': 'yearly',
-        'business': 'lifetime'
-      };
+      const isAgentPurchase = selectedPayment.plan_type.startsWith('agent_');
 
-      const newPlan = planMap[selectedPayment.plan_type] || 'pro';
-      const creditsMap: Record<string, number> = {
-        'starter': 30,
-        'pro': 50,
-        'business': 999
-      };
+      if (isAgentPurchase && (selectedPayment as any).agent_id) {
+        // Grant agent access
+        const agentId = (selectedPayment as any).agent_id;
+        const purchaseType = selectedPayment.plan_type.replace('agent_', '');
+        
+        let expiresAt: string | null = null;
+        if (purchaseType === 'monthly') {
+          expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        } else if (purchaseType === 'yearly') {
+          expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+        }
+        // lifetime = null (no expiry)
 
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .update({
-          plan: newPlan,
-          daily_credits: creditsMap[selectedPayment.plan_type] || 50,
-          max_daily_credits: creditsMap[selectedPayment.plan_type] || 50
-        })
-        .eq('user_id', selectedPayment.user_id);
+        const { error: subError } = await supabase
+          .from('agent_subscriptions')
+          .insert({
+            user_id: selectedPayment.user_id,
+            agent_id: agentId,
+            purchase_type: purchaseType,
+            status: 'active',
+            expires_at: expiresAt,
+          });
 
-      if (profileError) throw profileError;
+        if (subError) throw subError;
 
-      toast({
-        title: "Payment Verified",
-        description: `User upgraded to ${selectedPayment.plan_type} plan`
-      });
+        toast({
+          title: "Payment Verified",
+          description: `Agent access granted to user`
+        });
+      } else {
+        // Update user plan (platform plan purchase)
+        const planMap: Record<string, 'free' | 'pro' | 'yearly' | 'lifetime'> = {
+          'starter': 'pro',
+          'pro': 'yearly',
+          'business': 'lifetime'
+        };
+
+        const newPlan = planMap[selectedPayment.plan_type] || 'pro';
+        const creditsMap: Record<string, number> = {
+          'starter': 30,
+          'pro': 50,
+          'business': 999
+        };
+
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .update({
+            plan: newPlan,
+            daily_credits: creditsMap[selectedPayment.plan_type] || 50,
+            max_daily_credits: creditsMap[selectedPayment.plan_type] || 50
+          })
+          .eq('user_id', selectedPayment.user_id);
+
+        if (profileError) throw profileError;
+
+        toast({
+          title: "Payment Verified",
+          description: `User upgraded to ${selectedPayment.plan_type} plan`
+        });
+      }
 
       setActionModal(null);
       setSelectedPayment(null);
