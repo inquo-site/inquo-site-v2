@@ -145,7 +145,8 @@ serve(async (req) => {
           .single();
 
         if (!promoError && promoData) {
-          const validForPlan = isAgentPurchase || promoData.applicable_plans.includes(plan_type);
+          const planKey = isAgentPurchase ? `agent_${billing_cycle}` : plan_type;
+          const validForPlan = promoData.applicable_plans.includes(planKey);
           
           if (promoData.expires_at && new Date(promoData.expires_at) < new Date()) {
             console.log(`Promo code ${promo_code} has expired`);

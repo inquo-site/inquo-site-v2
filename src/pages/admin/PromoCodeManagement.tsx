@@ -400,9 +400,9 @@ export const PromoCodeManagement = () => {
             </div>
 
             <div>
-              <Label>Applicable Plans</Label>
-              <div className="flex gap-2 mt-2">
-                {['starter', 'pro', 'business'].map(plan => (
+              <Label>Applicable To</Label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {['starter', 'pro', 'business', 'agent_monthly', 'agent_yearly', 'agent_lifetime'].map(plan => (
                   <Button
                     key={plan}
                     type="button"
@@ -415,10 +415,11 @@ export const PromoCodeManagement = () => {
                       setFormData({ ...formData, applicable_plans: plans });
                     }}
                   >
-                    {plan}
+                    {plan.startsWith('agent_') ? `Agent ${plan.replace('agent_', '')}` : plan}
                   </Button>
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">Select which plan types or agent purchase types this code applies to</p>
             </div>
           </div>
           <DialogFooter>

@@ -3,15 +3,37 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Check, X, Sparkles, Zap, Building2, Star, ArrowRight, Users, Shield, BadgeCheck, Rocket, Globe, HelpCircle, ChevronDown } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Check, X, Sparkles, Zap, Building2, Star, ArrowRight, Users, Shield, BadgeCheck, Rocket, Globe, HelpCircle, Bot, Headphones, Scale, PenTool, BarChart3, MessageSquare, Search, BrainCircuit, FileText, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CountrySelector, getSelectedCountry, isIndianUser } from "@/components/CountrySelector";
 import { PaymentModal } from "@/components/PaymentModal";
+import { AgentPaymentModal } from "@/components/AgentPaymentModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { SEOHead } from "@/components/SEOHead";
 import { PromoPopup } from "@/components/PromoPopup";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  icon: string;
+  monthly_price: number;
+  yearly_price: number;
+  one_time_price: number;
+  usd_monthly_price: number;
+  usd_yearly_price: number;
+  usd_one_time_price: number;
+  is_premium: boolean;
+}
+
+const agentIconMap: Record<string, any> = {
+  Bot, Headphones, Scale, PenTool, BarChart3, MessageSquare, Search, BrainCircuit, FileText, Sparkles, Zap, Star,
+};
 
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(true);
@@ -19,6 +41,12 @@ const Pricing = () => {
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'starter' | 'pro' | 'business'>('pro');
+  const [activeTab, setActiveTab] = useState("plans");
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(true);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [agentPurchaseType, setAgentPurchaseType] = useState<'monthly' | 'yearly' | 'lifetime'>('monthly');
+  const [agentPaymentOpen, setAgentPaymentOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -27,6 +55,25 @@ const Pricing = () => {
     setSelectedCountry(country);
     setIsIndia(isIndianUser());
   }, []);
+
+  useEffect(() => {
+    fetchAgents();
+  }, []);
+
+  const fetchAgents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_agents')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      if (!error && data) setAgents(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAgentsLoading(false);
+    }
+  };
 
   // India pricing (INR)
   const indiaPlans = [
@@ -264,8 +311,8 @@ const Pricing = () => {
       a: "Yes, we offer a 7-day money-back guarantee if you're not satisfied with our service."
     },
     {
-      q: "What happens when I hit my usage limit?",
-      a: "You'll receive a notification. You can either upgrade your plan or wait for the next billing cycle."
+      q: "What are AI Agents?",
+      a: "AI Agents are specialized autonomous workers that handle complete tasks like content calendars, legal drafting, market research, and more. You can purchase individual agents separately."
     },
   ];
 
@@ -286,23 +333,46 @@ const Pricing = () => {
       navigate('/dashboard');
       return;
     }
-    
     if (!user) {
       navigate('/auth');
       return;
     }
-
     const planKey = planName.toLowerCase() as 'starter' | 'pro' | 'business';
     setSelectedPlan(planKey);
     setPaymentModalOpen(true);
   };
 
+  const handleAgentBuy = (agent: Agent, type: 'monthly' | 'yearly' | 'lifetime') => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    setSelectedAgent(agent);
+    setAgentPurchaseType(type);
+    setAgentPaymentOpen(true);
+  };
+
+  const formatAgentPrice = (agent: Agent, type: 'monthly' | 'yearly' | 'lifetime') => {
+    const symbol = isIndia ? '₹' : '$';
+    const priceMap = {
+      monthly: isIndia ? agent.monthly_price : agent.usd_monthly_price,
+      yearly: isIndia ? agent.yearly_price : agent.usd_yearly_price,
+      lifetime: isIndia ? agent.one_time_price : agent.usd_one_time_price,
+    };
+    return `${symbol}${(priceMap[type] || 0).toLocaleString()}`;
+  };
+
+  const AgentIcon = ({ iconName }: { iconName: string }) => {
+    const Icon = agentIconMap[iconName] || Bot;
+    return <Icon className="w-6 h-6" />;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Pricing - Affordable AI Tools Plans"
-        description="Choose from Free, Starter, Pro, or Business plans. No hidden charges. 7-day free trial. Access 160+ AI tools for writing, coding, design & marketing."
-        keywords="AI tools pricing, affordable AI, AI subscription plans, Inquo pricing"
+        title="Pricing - Affordable AI Tools & Agents"
+        description="Choose from Free, Starter, Pro, or Business plans. Buy individual AI Agents. No hidden charges. 7-day free trial. Access 160+ AI tools."
+        keywords="AI tools pricing, AI agents pricing, affordable AI, AI subscription plans, Inquo pricing"
         canonicalUrl="https://inquo.site/pricing"
       />
       <PromoPopup />
@@ -321,7 +391,6 @@ const Pricing = () => {
               No hidden charges. Start free, upgrade when you need more power. Cancel anytime.
             </p>
 
-            {/* Country Display */}
             {selectedCountry && (
               <button 
                 onClick={handleChangeCountry}
@@ -333,7 +402,6 @@ const Pricing = () => {
               </button>
             )}
 
-            {/* Trust Badges */}
             <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
               {highlights.map((item, index) => (
                 <div key={index} className="flex items-center gap-2 glass-card px-4 py-2 rounded-full">
@@ -342,177 +410,281 @@ const Pricing = () => {
                 </div>
               ))}
             </div>
-
-            {/* Billing Toggle */}
-            <div className="inline-flex items-center gap-4 p-2 glass-card rounded-full">
-              <button
-                onClick={() => setIsYearly(false)}
-                className={`px-6 py-2 rounded-full font-medium transition-all ${
-                  !isYearly ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setIsYearly(true)}
-                className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
-                  isYearly ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Yearly
-                <Badge variant="secondary" className="bg-accent text-accent-foreground text-xs">
-                  Save up to 18%
-                </Badge>
-              </button>
-            </div>
           </div>
 
-          {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-            {plans.map((plan, index) => (
-              <Card
-                key={index}
-                className={`p-6 relative transition-all duration-300 hover:shadow-xl ${
-                  plan.highlight 
-                    ? "border-2 border-accent scale-105 shadow-lg bg-gradient-to-b from-accent/5 to-transparent" 
-                    : "border-2 hover:border-accent/50"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-accent text-accent-foreground px-4 py-1 font-semibold shadow-lg">
-                      <Star className="w-3 h-3 mr-1 fill-current" />
-                      Most Popular
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-12">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+              <TabsTrigger value="plans" className="gap-2">
+                <Zap className="w-4 h-4" />
+                Platform Plans
+              </TabsTrigger>
+              <TabsTrigger value="agents" className="gap-2">
+                <Bot className="w-4 h-4" />
+                AI Agents
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Platform Plans Tab */}
+            <TabsContent value="plans">
+              {/* Billing Toggle */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-4 p-2 glass-card rounded-full">
+                  <button
+                    onClick={() => setIsYearly(false)}
+                    className={`px-6 py-2 rounded-full font-medium transition-all ${
+                      !isYearly ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setIsYearly(true)}
+                    className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 ${
+                      isYearly ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Yearly
+                    <Badge variant="secondary" className="bg-accent text-accent-foreground text-xs">
+                      Save up to 18%
                     </Badge>
-                  </div>
-                )}
-
-                <div className="text-center mb-6">
-                  <div className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center ${
-                    plan.highlight ? "bg-accent" : "bg-muted"
-                  }`}>
-                    <plan.icon className={`w-6 h-6 ${plan.highlight ? "text-accent-foreground" : "text-foreground"}`} />
-                  </div>
-                  <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
-                  <p className="text-xs text-accent font-medium mb-1">{plan.subtitle}</p>
-                  <p className="text-xs text-muted-foreground mb-4">{plan.description}</p>
-                  
-                  <div className="mb-2">
-                    {plan.price ? (
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-4xl font-bold">{plan.price}</span>
-                        <span className="text-muted-foreground text-sm">/{plan.period}</span>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-4xl font-bold">
-                            {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
-                          </span>
-                          <span className="text-muted-foreground text-sm">/month</span>
-                        </div>
-                        {isYearly && plan.yearlyTotal && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Billed as {plan.yearlyTotal}
-                          </p>
-                        )}
-                        {isYearly && plan.savings && (
-                          <p className="text-sm text-accent font-medium mt-1">
-                            {plan.savings}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
+                  </button>
                 </div>
+              </div>
 
-                <ul className="space-y-2 mb-6">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      {feature.included ? (
-                        <Check className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <X className="w-4 h-4 text-muted-foreground/50 flex-shrink-0 mt-0.5" />
-                      )}
-                      <span className={`text-sm ${feature.included ? "text-foreground" : "text-muted-foreground/50"}`}>
-                        {feature.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+              {/* Plan Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+                {plans.map((plan, index) => (
+                  <Card
+                    key={index}
+                    className={`p-6 relative transition-all duration-300 hover:shadow-xl ${
+                      plan.highlight 
+                        ? "border-2 border-accent scale-105 shadow-lg bg-gradient-to-b from-accent/5 to-transparent" 
+                        : "border-2 hover:border-accent/50"
+                    }`}
+                  >
+                    {plan.popular && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-accent text-accent-foreground px-4 py-1 font-semibold shadow-lg">
+                          <Star className="w-3 h-3 mr-1 fill-current" />
+                          Most Popular
+                        </Badge>
+                      </div>
+                    )}
 
-                {plan.limitations && (
-                  <div className="mb-4 p-2 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-medium mb-1">Limitations:</p>
-                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                      {plan.limitations.map((limit, i) => (
-                        <li key={i}>• {limit}</li>
+                    <div className="text-center mb-6">
+                      <div className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center ${
+                        plan.highlight ? "bg-accent" : "bg-muted"
+                      }`}>
+                        <plan.icon className={`w-6 h-6 ${plan.highlight ? "text-accent-foreground" : "text-foreground"}`} />
+                      </div>
+                      <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+                      <p className="text-xs text-accent font-medium mb-1">{plan.subtitle}</p>
+                      <p className="text-xs text-muted-foreground mb-4">{plan.description}</p>
+                      
+                      <div className="mb-2">
+                        {plan.price ? (
+                          <div className="flex items-baseline justify-center gap-1">
+                            <span className="text-4xl font-bold">{plan.price}</span>
+                            <span className="text-muted-foreground text-sm">/{plan.period}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-baseline justify-center gap-1">
+                              <span className="text-4xl font-bold">
+                                {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                              </span>
+                              <span className="text-muted-foreground text-sm">/month</span>
+                            </div>
+                            {isYearly && plan.yearlyTotal && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Billed as {plan.yearlyTotal}
+                              </p>
+                            )}
+                            {isYearly && plan.savings && (
+                              <p className="text-sm text-accent font-medium mt-1">
+                                {plan.savings}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <ul className="space-y-2 mb-6">
+                      {plan.features.map((feature, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          {feature.included ? (
+                            <Check className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                          ) : (
+                            <X className="w-4 h-4 text-muted-foreground/50 flex-shrink-0 mt-0.5" />
+                          )}
+                          <span className={`text-sm ${feature.included ? "text-foreground" : "text-muted-foreground/50"}`}>
+                            {feature.text}
+                          </span>
+                        </li>
                       ))}
                     </ul>
-                  </div>
-                )}
 
-                <Button
-                  className={`w-full h-11 font-semibold ${
-                    plan.highlight
-                      ? "bg-accent hover:bg-accent/90 text-accent-foreground"
-                      : ""
-                  }`}
-                  variant={plan.highlight ? "default" : "outline"}
-                  onClick={() => handlePlanSelect(plan.name)}
-                >
-                  {plan.cta}
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-                
-                {plan.highlight && (
-                  <p className="text-center text-xs text-muted-foreground mt-3">
-                    7-day free trial included
-                  </p>
-                )}
-              </Card>
-            ))}
-          </div>
+                    {plan.limitations && (
+                      <div className="mb-4 p-2 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground font-medium mb-1">Limitations:</p>
+                        <ul className="text-xs text-muted-foreground space-y-0.5">
+                          {plan.limitations.map((limit, i) => (
+                            <li key={i}>• {limit}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
-          {/* Comparison Table */}
-          <div className="mb-20">
-            <h2 className="text-3xl font-bold text-center mb-12">Compare Plans</h2>
-            <Card className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="text-left p-4 font-semibold">Feature</th>
-                      <th className="text-center p-4 font-semibold">Free</th>
-                      <th className="text-center p-4 font-semibold">Starter</th>
-                      <th className="text-center p-4 font-semibold bg-accent/10">Pro</th>
-                      <th className="text-center p-4 font-semibold">Business</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {comparisonFeatures.map((feature, index) => (
-                      <tr key={index} className="border-b last:border-0">
-                        <td className="p-4 font-medium">{feature.name}</td>
-                        <td className="p-4 text-center text-muted-foreground">{feature.free}</td>
-                        <td className="p-4 text-center text-muted-foreground">{feature.starter}</td>
-                        <td className="p-4 text-center bg-accent/5 font-medium">{feature.pro}</td>
-                        <td className="p-4 text-center text-muted-foreground">{feature.business}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    <Button
+                      className={`w-full h-11 font-semibold ${
+                        plan.highlight
+                          ? "bg-accent hover:bg-accent/90 text-accent-foreground"
+                          : ""
+                      }`}
+                      variant={plan.highlight ? "default" : "outline"}
+                      onClick={() => handlePlanSelect(plan.name)}
+                    >
+                      {plan.cta}
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Button>
+                    
+                    {plan.highlight && (
+                      <p className="text-center text-xs text-muted-foreground mt-3">
+                        7-day free trial included
+                      </p>
+                    )}
+                  </Card>
+                ))}
               </div>
-            </Card>
-          </div>
 
-          {/* Referral Program */}
+              {/* Comparison Table */}
+              <div className="mb-20">
+                <h2 className="text-3xl font-bold text-center mb-12">Compare Plans</h2>
+                <Card className="overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left p-4 font-semibold">Feature</th>
+                          <th className="text-center p-4 font-semibold">Free</th>
+                          <th className="text-center p-4 font-semibold">Starter</th>
+                          <th className="text-center p-4 font-semibold bg-accent/10">Pro</th>
+                          <th className="text-center p-4 font-semibold">Business</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {comparisonFeatures.map((feature, index) => (
+                          <tr key={index} className="border-b last:border-0">
+                            <td className="p-4 font-medium">{feature.name}</td>
+                            <td className="p-4 text-center text-muted-foreground">{feature.free}</td>
+                            <td className="p-4 text-center text-muted-foreground">{feature.starter}</td>
+                            <td className="p-4 text-center bg-accent/5 font-medium">{feature.pro}</td>
+                            <td className="p-4 text-center text-muted-foreground">{feature.business}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* AI Agents Tab */}
+            <TabsContent value="agents">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold mb-3">AI Agents That Do Real Work</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Purchase individual AI agents — each specializes in a domain. Pay per agent, choose monthly, yearly, or lifetime access.
+                </p>
+              </div>
+
+              {agentsLoading ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                  {agents.map((agent) => {
+                    const isFree = !agent.is_premium;
+                    return (
+                      <Card key={agent.id} className="p-6 border-2 hover:border-accent/50 transition-all hover:shadow-lg">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent">
+                            <AgentIcon iconName={agent.icon || 'Bot'} />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg">{agent.name}</h3>
+                            <Badge variant="outline" className="text-xs">{agent.category}</Badge>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-6 line-clamp-2">{agent.description}</p>
+
+                        {isFree ? (
+                          <div className="space-y-3">
+                            <div className="text-center p-3 bg-muted/50 rounded-lg">
+                              <span className="text-2xl font-bold text-accent">Free</span>
+                            </div>
+                            <Button className="w-full" asChild>
+                              <Link to={`/agent/${agent.id}`}>
+                                Start Work <ArrowRight className="ml-2 w-4 h-4" />
+                              </Link>
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-3 gap-2">
+                              <button
+                                onClick={() => handleAgentBuy(agent, 'monthly')}
+                                className="p-3 rounded-lg border-2 border-border hover:border-accent transition-colors text-center"
+                              >
+                                <p className="text-xs text-muted-foreground">Monthly</p>
+                                <p className="font-bold text-sm">{formatAgentPrice(agent, 'monthly')}</p>
+                              </button>
+                              <button
+                                onClick={() => handleAgentBuy(agent, 'yearly')}
+                                className="p-3 rounded-lg border-2 border-accent/50 hover:border-accent transition-colors text-center relative"
+                              >
+                                <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] px-1.5 bg-accent text-accent-foreground">Save</Badge>
+                                <p className="text-xs text-muted-foreground">Yearly</p>
+                                <p className="font-bold text-sm">{formatAgentPrice(agent, 'yearly')}</p>
+                              </button>
+                              <button
+                                onClick={() => handleAgentBuy(agent, 'lifetime')}
+                                className="p-3 rounded-lg border-2 border-border hover:border-accent transition-colors text-center"
+                              >
+                                <p className="text-xs text-muted-foreground">Lifetime</p>
+                                <p className="font-bold text-sm">{formatAgentPrice(agent, 'lifetime')}</p>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+
+              {agents.length > 0 && (
+                <div className="text-center mb-12">
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/agents">
+                      View All Agents <ArrowRight className="ml-2 w-4 h-4" />
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          {/* Affiliate */}
           <div className="mb-20">
             <Card className="p-8 text-center bg-gradient-to-br from-accent/10 to-transparent border-2 border-accent/20">
               <Users className="w-12 h-12 mx-auto mb-4 text-accent" />
               <h3 className="text-2xl font-bold mb-4">Affiliate Program — Earn 20% Lifetime</h3>
               <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-                Share InQuo.Site with your network and earn 20% lifetime commission on every referral. 
-                No limits, no caps — passive income made easy!
+                Share InQuo.Site with your network and earn 20% lifetime commission on every referral.
               </p>
               <Button asChild className="bg-accent hover:bg-accent/90">
                 <Link to="/auth">
@@ -533,9 +705,6 @@ const Pricing = () => {
               <h2 className="text-3xl sm:text-4xl font-bold mb-4">
                 Frequently Asked <span className="text-gradient">Questions</span>
               </h2>
-              <p className="text-muted-foreground">
-                Everything you need to know about our pricing and plans
-              </p>
             </div>
             
             <Accordion type="single" collapsible className="space-y-4">
@@ -600,6 +769,15 @@ const Pricing = () => {
         planType={selectedPlan}
         billingCycle={isYearly ? 'yearly' : 'monthly'}
       />
+
+      {selectedAgent && (
+        <AgentPaymentModal
+          open={agentPaymentOpen}
+          onClose={() => setAgentPaymentOpen(false)}
+          agent={selectedAgent}
+          purchaseType={agentPurchaseType}
+        />
+      )}
     </div>
   );
 };
