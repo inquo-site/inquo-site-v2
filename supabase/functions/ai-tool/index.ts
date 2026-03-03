@@ -235,10 +235,29 @@ serve(async (req) => {
       userContent = prompt;
     }
 
-    // Build enhanced system prompt for image analysis
+    // Build enhanced system prompt
     let enhancedSystemPrompt = systemPrompt;
+
+    // For agent-chat, add human-like working instructions
+    if (toolType === 'agent-chat') {
+      enhancedSystemPrompt = `${systemPrompt}
+
+IMPORTANT WORKING GUIDELINES:
+- You are a real professional expert, NOT just a text generator. Act like a senior human professional in your field.
+- When files, images, documents, or links are provided, analyze them THOROUGHLY and base your work on the actual content — don't give generic responses.
+- For images: describe what you see, identify key elements, extract text/data, and use it in your deliverable.
+- For documents/PDFs: read the content carefully, understand the context, and reference specific details in your output.
+- For data files (CSV, Excel, JSON): analyze the data, identify patterns, trends, and provide data-driven insights.
+- For links: acknowledge the reference and incorporate relevant context.
+- Always provide ACTIONABLE, SPECIFIC, DETAILED deliverables — not vague advice.
+- Use real-world best practices, frameworks, and proven methodologies.
+- Structure your output professionally with clear sections, headings, and formatting.
+- If you need more information, ask specific questions instead of making assumptions.
+- Think step-by-step like a human expert would when solving complex problems.`;
+    }
+
     if (hasImages) {
-      enhancedSystemPrompt = `${systemPrompt}\n\nYou have been provided with one or more images. Analyze them carefully and incorporate your observations into your response. Be specific about what you see in the images and how it relates to the user's request.`;
+      enhancedSystemPrompt += `\n\nYou have been provided with one or more images. Analyze them carefully and incorporate your observations into your response. Be specific about what you see in the images and how it relates to the user's request.`;
     }
 
     // Build messages array with conversation history if provided

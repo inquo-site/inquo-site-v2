@@ -13,7 +13,7 @@ import {
   Bot, Send, ArrowLeft, Loader2, User, Crown, Sparkles,
   Headphones, Target, Search, TrendingUp, FileText, Users, Scale, 
   Wrench, DollarSign, Pen, BarChart, Package, Trash2, Copy, Download,
-  CheckCircle2, Zap, Lock
+  CheckCircle2, Zap, Lock, Paperclip, Image, File, X, LinkIcon
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +33,15 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  attachments?: AttachedFile[];
+}
+
+interface AttachedFile {
+  name: string;
+  type: string;
+  size: number;
+  data: string; // base64 data URL
+  preview?: string;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -103,6 +112,17 @@ const agentTaskSuggestions: Record<string, string[]> = {
   ],
 };
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILES = 5;
+const ACCEPTED_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf',
+  'text/plain', 'text/csv', 'text/markdown',
+  'application/json',
+  'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+
 const AgentChat = () => {
   const { agentId } = useParams();
   const navigate = useNavigate();
@@ -115,8 +135,12 @@ const AgentChat = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [linkInput, setLinkInput] = useState("");
+  const [showLinkInput, setShowLinkInput] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (agentId) {
@@ -145,7 +169,6 @@ const AgentChat = () => {
       if (data && data.length > 0) {
         const a = data[0] as Agent;
         setAgent(a);
-        // Free agents (price = 0) are accessible to all
         if (a.monthly_price === 0) setHasAccess(true);
       } else {
         toast.error("Agent not found");
@@ -202,8 +225,77 @@ const AgentChat = () => {
     }
   };
 
+  // File handling
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    processFiles(selectedFiles);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const processFiles = (selectedFiles: File[]) => {
+    if (attachedFiles.length + selectedFiles.length > MAX_FILES) {
+      toast.error(`Maximum ${MAX_FILES} files allowed`);
+      return;
+    }
+
+    selectedFiles.forEach(file => {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name} is too large (max 10MB)`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const newFile: AttachedFile = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          data: dataUrl,
+          preview: file.type.startsWith('image/') ? dataUrl : undefined,
+        };
+        setAttachedFiles(prev => [...prev, newFile]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddLink = () => {
+    if (!linkInput.trim()) return;
+    const url = linkInput.trim();
+    setInput(prev => prev ? `${prev}\n\n🔗 Reference Link: ${url}` : `🔗 Reference Link: ${url}`);
+    setLinkInput("");
+    setShowLinkInput(false);
+    toast.success("Link added to message");
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    processFiles(droppedFiles);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <Image className="w-4 h-4" />;
+    return <File className="w-4 h-4" />;
+  };
+
   const handleSend = async () => {
-    if (!input.trim() || sending) return;
+    if ((!input.trim() && attachedFiles.length === 0) || sending) return;
 
     if (!hasAccess) {
       toast.error("Please subscribe to this agent to start working");
@@ -212,14 +304,21 @@ const AgentChat = () => {
     }
 
     const userMessage = input.trim();
+    const currentFiles = [...attachedFiles];
     setInput("");
+    setAttachedFiles([]);
     setSending(true);
+
+    const displayContent = userMessage + (currentFiles.length > 0 
+      ? `\n\n📎 ${currentFiles.length} file(s) attached: ${currentFiles.map(f => f.name).join(', ')}`
+      : '');
 
     const tempUserMsg: Message = {
       id: `temp-${Date.now()}`,
       role: "user",
-      content: userMessage,
-      created_at: new Date().toISOString()
+      content: displayContent,
+      created_at: new Date().toISOString(),
+      attachments: currentFiles,
     };
     setMessages(prev => [...prev, tempUserMsg]);
 
@@ -229,16 +328,24 @@ const AgentChat = () => {
         convId = await createConversation();
         setConversationId(convId);
       }
-      if (convId) await saveMessage(convId, "user", userMessage);
+      if (convId) await saveMessage(convId, "user", displayContent);
 
       const messageHistory = messages.map(m => ({ role: m.role, content: m.content }));
 
+      // Prepare files for backend
+      const filesPayload = currentFiles.map(f => ({
+        name: f.name,
+        type: f.type,
+        data: f.data,
+      }));
+
       const response = await supabase.functions.invoke("ai-tool", {
         body: {
-          prompt: userMessage,
+          prompt: userMessage || "Analyze the attached files and provide detailed insights based on the content.",
           toolType: "agent-chat",
           systemPrompt: agent?.system_prompt,
-          messages: messageHistory
+          messages: messageHistory,
+          files: filesPayload.length > 0 ? filesPayload : undefined,
         }
       });
 
@@ -274,6 +381,7 @@ const AgentChat = () => {
   const clearChat = () => {
     setMessages([]);
     setConversationId(null);
+    setAttachedFiles([]);
     toast.success("Chat cleared");
   };
 
@@ -317,7 +425,7 @@ const AgentChat = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col" onDrop={handleDrop} onDragOver={handleDragOver}>
       <Navbar />
       
       {/* Agent Header */}
@@ -358,7 +466,7 @@ const AgentChat = () => {
 
       {/* Chat Area */}
       <div className="flex-1 container mx-auto px-4 max-w-4xl">
-        <ScrollArea className="h-[calc(100vh-280px)] py-6">
+        <ScrollArea className="h-[calc(100vh-320px)] py-6">
           {!hasAccess ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <div className="p-4 bg-destructive/10 rounded-2xl mb-4">
@@ -379,8 +487,11 @@ const AgentChat = () => {
               </div>
               <h2 className="text-2xl font-bold mb-2">{agent.name}</h2>
               <p className="text-muted-foreground max-w-md mb-2">{agent.description}</p>
-              <p className="text-sm text-primary font-medium mb-6">
+              <p className="text-sm text-primary font-medium mb-2">
                 Tell me what to do — I'll produce complete, ready-to-use deliverables.
+              </p>
+              <p className="text-xs text-muted-foreground mb-6 flex items-center gap-1">
+                <Paperclip className="w-3 h-3" /> Attach files, images, docs, or links for context
               </p>
               <div className="flex flex-col gap-2 w-full max-w-lg">
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Quick Tasks</p>
@@ -413,6 +524,23 @@ const AgentChat = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="max-w-[85%]">
+                    {/* Show image previews for user messages with attachments */}
+                    {message.role === "user" && message.attachments && message.attachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-2 justify-end">
+                        {message.attachments.map((file, idx) => (
+                          <div key={idx} className="rounded-lg overflow-hidden border bg-muted">
+                            {file.preview ? (
+                              <img src={file.preview} alt={file.name} className="max-w-[200px] max-h-[150px] object-cover" />
+                            ) : (
+                              <div className="flex items-center gap-2 px-3 py-2 text-xs">
+                                {getFileIcon(file.type)}
+                                <span className="max-w-[120px] truncate">{file.name}</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div className={`rounded-2xl px-4 py-3 ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                       {message.role === "assistant" ? (
                         <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -458,24 +586,103 @@ const AgentChat = () => {
 
       {/* Input Area */}
       <div className="border-t bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 max-w-4xl">
-          <div className="flex gap-3">
+        <div className="container mx-auto px-4 py-3 max-w-4xl">
+          {/* Attached files preview */}
+          {attachedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {attachedFiles.map((file, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 text-sm border">
+                  {file.preview ? (
+                    <img src={file.preview} alt={file.name} className="w-8 h-8 rounded object-cover" />
+                  ) : (
+                    getFileIcon(file.type)
+                  )}
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium max-w-[120px] truncate">{file.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatFileSize(file.size)}</span>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-5 w-5 ml-1" onClick={() => removeFile(idx)}>
+                    <X className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Link input */}
+          {showLinkInput && (
+            <div className="flex gap-2 mb-3">
+              <input
+                type="url"
+                value={linkInput}
+                onChange={(e) => setLinkInput(e.target.value)}
+                placeholder="Paste a link (e.g. https://example.com/doc)"
+                className="flex-1 px-3 py-2 text-sm border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleAddLink(); }}
+              />
+              <Button size="sm" onClick={handleAddLink} disabled={!linkInput.trim()}>Add</Button>
+              <Button size="sm" variant="ghost" onClick={() => { setShowLinkInput(false); setLinkInput(""); }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
+          <div className="flex gap-2 items-end">
+            {/* Attachment buttons */}
+            <div className="flex gap-1 pb-1">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept={ACCEPTED_TYPES.join(',')}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending || !hasAccess || attachedFiles.length >= MAX_FILES}
+                title="Attach files"
+              >
+                <Paperclip className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setShowLinkInput(!showLinkInput)}
+                disabled={sending || !hasAccess}
+                title="Add link"
+              >
+                <LinkIcon className="w-4 h-4" />
+              </Button>
+            </div>
+
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={hasAccess ? `Give ${agent.name} a task...` : "Subscribe to start working with this agent"}
-              className="min-h-[52px] max-h-32 resize-none"
+              placeholder={hasAccess ? `Give ${agent.name} a task... (attach files, images, docs for context)` : "Subscribe to start working with this agent"}
+              className="min-h-[52px] max-h-32 resize-none flex-1"
               rows={1}
               disabled={sending || !hasAccess}
             />
-            <Button onClick={handleSend} disabled={!input.trim() || sending || !hasAccess} size="icon" className="h-[52px] w-[52px]">
+            <Button 
+              onClick={handleSend} 
+              disabled={(!input.trim() && attachedFiles.length === 0) || sending || !hasAccess} 
+              size="icon" 
+              className="h-[52px] w-[52px]"
+            >
               {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
             </Button>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
-            {hasAccess ? "Agent produces complete deliverables. Copy or download outputs instantly." : "Subscribe to unlock this agent's capabilities."}
+            {hasAccess 
+              ? "📎 Attach images, PDFs, docs, CSVs, or paste links. Agent analyzes everything like a real human." 
+              : "Subscribe to unlock this agent's capabilities."}
           </p>
         </div>
       </div>
