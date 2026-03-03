@@ -51,7 +51,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory } = await req.json();
+    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory, stream: requestStream } = await req.json();
 
     if (!prompt && (!files || files.length === 0)) {
       return new Response(
@@ -273,6 +273,8 @@ IMPORTANT WORKING GUIDELINES:
     // Add current user message
     messagesArray.push({ role: 'user', content: userContent });
 
+    const useStreaming = requestStream === true && toolType === 'agent-chat';
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -283,6 +285,7 @@ IMPORTANT WORKING GUIDELINES:
         model: 'google/gemini-2.5-flash',
         messages: messagesArray,
         max_tokens: 4000,
+        stream: useStreaming,
       }),
     });
 
@@ -307,6 +310,15 @@ IMPORTANT WORKING GUIDELINES:
       throw new Error(`AI API error: ${response.status}`);
     }
 
+    // Streaming response for agent-chat
+    if (useStreaming) {
+      console.log(`Streaming ${toolType} response...`);
+      return new Response(response.body, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
+      });
+    }
+
+    // Non-streaming response for other tools
     const data = await response.json();
     const result = data.choices?.[0]?.message?.content;
 
