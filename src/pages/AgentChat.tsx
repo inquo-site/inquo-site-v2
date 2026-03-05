@@ -13,7 +13,8 @@ import {
   Bot, Send, ArrowLeft, Loader2, User, Crown, Sparkles,
   Headphones, Target, Search, TrendingUp, FileText, Users, Scale, 
   Wrench, DollarSign, Pen, BarChart, Package, Trash2, Copy, Download,
-  CheckCircle2, Zap, Lock, Paperclip, Image, File, X, LinkIcon
+  CheckCircle2, Zap, Lock, Paperclip, Image, File, X, LinkIcon,
+  Brain, Globe, FileSearch, Database
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,8 +41,13 @@ interface AttachedFile {
   name: string;
   type: string;
   size: number;
-  data: string; // base64 data URL
+  data: string;
   preview?: string;
+}
+
+interface MemoryItem {
+  key: string;
+  value: string;
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -138,6 +144,9 @@ const AgentChat = () => {
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [linkInput, setLinkInput] = useState("");
   const [showLinkInput, setShowLinkInput] = useState(false);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
+  const [showMemory, setShowMemory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -145,7 +154,10 @@ const AgentChat = () => {
   useEffect(() => {
     if (agentId) {
       fetchAgent();
-      if (user) checkAccess();
+      if (user) {
+        checkAccess();
+        loadMemory();
+      }
     }
   }, [agentId, user]);
 
@@ -155,6 +167,39 @@ const AgentChat = () => {
 
   const scrollToBottom = () => {
     if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const loadMemory = async () => {
+    if (!user || !agentId) return;
+    try {
+      const { data, error } = await supabase
+        .from("agent_memory" as any)
+        .select("key, value")
+        .eq("user_id", user.id)
+        .eq("agent_id", agentId)
+        .order("updated_at", { ascending: false });
+
+      if (!error && data) {
+        setMemoryItems((data as any[]).map((d: any) => ({ key: d.key, value: d.value })));
+      }
+    } catch (e) {
+      console.error("Error loading memory:", e);
+    }
+  };
+
+  const clearMemory = async () => {
+    if (!user || !agentId) return;
+    try {
+      await supabase
+        .from("agent_memory" as any)
+        .delete()
+        .eq("user_id", user.id)
+        .eq("agent_id", agentId);
+      setMemoryItems([]);
+      toast.success("Memory cleared");
+    } catch (e) {
+      toast.error("Failed to clear memory");
+    }
   };
 
   const fetchAgent = async () => {
@@ -294,6 +339,42 @@ const AgentChat = () => {
     return <File className="w-4 h-4" />;
   };
 
+  // Extract memory from response and save
+  const extractAndSaveMemory = async (responseText: string) => {
+    const memoryMatch = responseText.match(/<MEMORY>([\s\S]*?)<\/MEMORY>/);
+    if (memoryMatch && user && agentId) {
+      const memoryLines = memoryMatch[1].trim().split('\n').filter(l => l.trim());
+      const memories = memoryLines.map(line => {
+        const [key, ...valueParts] = line.split(':');
+        return { key: key.trim(), value: valueParts.join(':').trim() };
+      }).filter(m => m.key && m.value);
+
+      if (memories.length > 0) {
+        // Save to DB via direct insert/upsert
+        for (const mem of memories) {
+          await supabase
+            .from("agent_memory" as any)
+            .upsert(
+              { user_id: user.id, agent_id: agentId, key: mem.key, value: mem.value, updated_at: new Date().toISOString() } as any,
+              { onConflict: 'user_id,agent_id,key' } as any
+            );
+        }
+        // Update local state
+        setMemoryItems(prev => {
+          const updated = [...prev];
+          for (const mem of memories) {
+            const idx = updated.findIndex(m => m.key === mem.key);
+            if (idx >= 0) updated[idx] = mem;
+            else updated.push(mem);
+          }
+          return updated;
+        });
+      }
+    }
+    // Return cleaned content without memory block
+    return responseText.replace(/<MEMORY>[\s\S]*?<\/MEMORY>/g, '').trim();
+  };
+
   const handleSend = async () => {
     if ((!input.trim() && attachedFiles.length === 0) || sending) return;
 
@@ -332,7 +413,6 @@ const AgentChat = () => {
 
       const messageHistory = messages.map(m => ({ role: m.role, content: m.content }));
 
-      // Prepare files for backend
       const filesPayload = currentFiles.map(f => ({
         name: f.name,
         type: f.type,
@@ -346,9 +426,10 @@ const AgentChat = () => {
         messages: messageHistory,
         files: filesPayload.length > 0 ? filesPayload : undefined,
         stream: true,
+        agentId: agentId,
+        webSearch: webSearchEnabled,
       };
 
-      // Use fetch for streaming
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tool`;
       const session = (await supabase.auth.getSession()).data.session;
 
@@ -369,14 +450,12 @@ const AgentChat = () => {
 
       if (!resp.body) throw new Error("No response body");
 
-      // Stream the response token by token
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
       let assistantSoFar = "";
       let streamDone = false;
 
-      // Create assistant message placeholder
       const assistantMsgId = `temp-${Date.now()}-assistant`;
       setMessages(prev => [...prev, {
         id: assistantMsgId,
@@ -410,9 +489,10 @@ const AgentChat = () => {
             const content = parsed.choices?.[0]?.delta?.content as string | undefined;
             if (content) {
               assistantSoFar += content;
-              const currentContent = assistantSoFar;
+              // Show content without memory block in real-time
+              const displayContent = assistantSoFar.replace(/<MEMORY>[\s\S]*?<\/MEMORY>/g, '').trim();
               setMessages(prev =>
-                prev.map(m => m.id === assistantMsgId ? { ...m, content: currentContent } : m)
+                prev.map(m => m.id === assistantMsgId ? { ...m, content: displayContent } : m)
               );
             }
           } catch {
@@ -439,13 +519,15 @@ const AgentChat = () => {
             }
           } catch { /* ignore */ }
         }
-        const finalContent = assistantSoFar;
-        setMessages(prev =>
-          prev.map(m => m.id === assistantMsgId ? { ...m, content: finalContent } : m)
-        );
       }
 
-      if (convId) await saveMessage(convId, "assistant", assistantSoFar);
+      // Extract memory and clean response
+      const cleanedContent = await extractAndSaveMemory(assistantSoFar);
+      setMessages(prev =>
+        prev.map(m => m.id === assistantMsgId ? { ...m, content: cleanedContent } : m)
+      );
+
+      if (convId) await saveMessage(convId, "assistant", cleanedContent);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Failed to get response. Please try again.");
@@ -539,14 +621,65 @@ const AgentChat = () => {
                 <p className="text-sm text-muted-foreground line-clamp-1">{agent.description}</p>
               </div>
             </div>
-            {messages.length > 0 && (
-              <Button variant="outline" size="sm" onClick={clearChat}>
-                <Trash2 className="w-4 h-4 mr-1" /> New Task
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Capabilities badges */}
+              <div className="hidden md:flex items-center gap-1.5">
+                <Badge variant="outline" className="text-[10px] gap-1">
+                  <Brain className="w-3 h-3" /> Memory
+                  {memoryItems.length > 0 && <span className="text-primary">({memoryItems.length})</span>}
+                </Badge>
+                <Badge variant="outline" className="text-[10px] gap-1">
+                  <FileSearch className="w-3 h-3" /> Docs
+                </Badge>
+                <Badge variant="outline" className="text-[10px] gap-1">
+                  <Globe className="w-3 h-3" /> Search
+                </Badge>
+                <Badge variant="outline" className="text-[10px] gap-1">
+                  <Wrench className="w-3 h-3" /> Tools
+                </Badge>
+              </div>
+              {messages.length > 0 && (
+                <Button variant="outline" size="sm" onClick={clearChat}>
+                  <Trash2 className="w-4 h-4 mr-1" /> New Task
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Memory Panel */}
+      {showMemory && memoryItems.length > 0 && (
+        <div className="border-b bg-muted/30">
+          <div className="container mx-auto px-4 py-3 max-w-4xl">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Brain className="w-4 h-4 text-primary" />
+                Agent Memory ({memoryItems.length} items)
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearMemory}>
+                  <Trash2 className="w-3 h-3 mr-1" /> Clear Memory
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setShowMemory(false)}>
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {memoryItems.map((item, idx) => (
+                <div key={idx} className="flex items-start gap-2 bg-background/60 rounded-lg px-3 py-2 text-xs border">
+                  <Database className="w-3 h-3 mt-0.5 text-primary shrink-0" />
+                  <div>
+                    <span className="font-medium text-foreground">{item.key}:</span>{" "}
+                    <span className="text-muted-foreground">{item.value}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Chat Area */}
       <div className="flex-1 container mx-auto px-4 max-w-4xl">
@@ -571,12 +704,34 @@ const AgentChat = () => {
               </div>
               <h2 className="text-2xl font-bold mb-2">{agent.name}</h2>
               <p className="text-muted-foreground max-w-md mb-2">{agent.description}</p>
-              <p className="text-sm text-primary font-medium mb-2">
+              <p className="text-sm text-primary font-medium mb-3">
                 Tell me what to do — I'll produce complete, ready-to-use deliverables.
               </p>
-              <p className="text-xs text-muted-foreground mb-6 flex items-center gap-1">
-                <Paperclip className="w-3 h-3" /> Attach files, images, docs, or links for context
-              </p>
+              
+              {/* Capabilities Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6 w-full max-w-lg">
+                <div className="flex flex-col items-center gap-1 p-3 rounded-lg border bg-card text-xs">
+                  <Brain className="w-5 h-5 text-primary" />
+                  <span className="font-medium">Memory</span>
+                  <span className="text-muted-foreground text-[10px]">Remembers you</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 p-3 rounded-lg border bg-card text-xs">
+                  <Globe className="w-5 h-5 text-primary" />
+                  <span className="font-medium">Web Search</span>
+                  <span className="text-muted-foreground text-[10px]">Real-time info</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 p-3 rounded-lg border bg-card text-xs">
+                  <FileSearch className="w-5 h-5 text-primary" />
+                  <span className="font-medium">Doc Analysis</span>
+                  <span className="text-muted-foreground text-[10px]">Files & images</span>
+                </div>
+                <div className="flex flex-col items-center gap-1 p-3 rounded-lg border bg-card text-xs">
+                  <Wrench className="w-5 h-5 text-primary" />
+                  <span className="font-medium">Pro Tools</span>
+                  <span className="text-muted-foreground text-[10px]">Tables & plans</span>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-2 w-full max-w-lg">
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Quick Tasks</p>
                 {suggestions.map((suggestion) => (
@@ -712,7 +867,7 @@ const AgentChat = () => {
           )}
 
           <div className="flex gap-2 items-end">
-            {/* Attachment buttons */}
+            {/* Attachment & feature buttons */}
             <div className="flex gap-1 pb-1">
               <input
                 ref={fileInputRef}
@@ -742,6 +897,29 @@ const AgentChat = () => {
               >
                 <LinkIcon className="w-4 h-4" />
               </Button>
+              <Button
+                variant={webSearchEnabled ? "default" : "ghost"}
+                size="icon"
+                className={`h-9 w-9 ${webSearchEnabled ? 'bg-primary text-primary-foreground' : ''}`}
+                onClick={() => {
+                  setWebSearchEnabled(!webSearchEnabled);
+                  toast.success(webSearchEnabled ? "Web search disabled" : "Web search enabled");
+                }}
+                disabled={sending || !hasAccess}
+                title="Toggle web search"
+              >
+                <Globe className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 ${memoryItems.length > 0 ? 'text-primary' : ''}`}
+                onClick={() => setShowMemory(!showMemory)}
+                disabled={!hasAccess}
+                title={`Memory (${memoryItems.length} items)`}
+              >
+                <Brain className="w-4 h-4" />
+              </Button>
             </div>
 
             <Textarea
@@ -765,7 +943,7 @@ const AgentChat = () => {
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
             {hasAccess 
-              ? "📎 Attach images, PDFs, docs, CSVs, or paste links. Agent analyzes everything like a real human." 
+              ? `🧠 Memory${memoryItems.length > 0 ? ` (${memoryItems.length})` : ''} • 🔍 ${webSearchEnabled ? 'Search ON' : 'Search OFF'} • 📎 Files • 🔗 Links • 🛠️ Pro Tools` 
               : "Subscribe to unlock this agent's capabilities."}
           </p>
         </div>

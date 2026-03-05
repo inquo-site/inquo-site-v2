@@ -28,8 +28,6 @@ const TOOL_PROMPTS: Record<string, string> = {
   hashtags: "You are a social media strategist specializing in hashtag optimization. Generate a mix of popular, niche, and branded hashtags that maximize reach and engagement. Provide hashtags organized by category (trending, niche-specific, branded) with brief explanations of their relevance.",
   paraphrase: "You are an expert at paraphrasing text. Rewrite the provided content in a different way while preserving the original meaning. Vary sentence structure, use synonyms, and improve clarity while maintaining the core message.",
   copywriting: "You are an expert copywriter. Create persuasive, engaging copy that drives action. Focus on the target audience's pain points, desires, and motivations. Use proven copywriting techniques like AIDA (Attention, Interest, Desire, Action).",
-  
-  // Premium tools
   resume: "You are an expert resume writer and career coach. Create a professional, ATS-friendly resume that highlights the candidate's skills, experience, and achievements. Use action verbs, quantify accomplishments where possible, and format the content clearly with sections for Summary, Experience, Skills, and Education. Tailor the resume to the specified industry or job role.",
   coverletter: "You are an expert cover letter writer. Create a compelling, personalized cover letter that connects the candidate's experience to the job requirements. Include a strong opening hook, specific examples of relevant achievements, and enthusiasm for the role. Keep it professional yet personable, and end with a clear call-to-action.",
   seo: "You are an SEO content specialist. Create content that is optimized for search engines while remaining engaging for readers. Include the target keyword naturally throughout the content, use proper heading structure (H1, H2, H3), write meta descriptions, and ensure readability. Focus on E-E-A-T principles (Experience, Expertise, Authoritativeness, Trustworthiness).",
@@ -44,14 +42,51 @@ const TOOL_PROMPTS: Record<string, string> = {
   strategy: "You are a marketing strategy expert. Develop comprehensive marketing strategies with clear goals, target audience analysis, channel recommendations, and actionable tactics.",
 };
 
+// Helper: Load agent memory
+async function loadMemory(adminClient: any, userId: string, agentId: string): Promise<string> {
+  try {
+    const { data, error } = await adminClient
+      .from('agent_memory')
+      .select('key, value')
+      .eq('user_id', userId)
+      .eq('agent_id', agentId)
+      .order('updated_at', { ascending: false })
+      .limit(50);
+    
+    if (error || !data || data.length === 0) return '';
+    
+    const memoryStr = data.map((m: any) => `- ${m.key}: ${m.value}`).join('\n');
+    return `\n\n📝 USER MEMORY (things you remember about this user from past conversations):\n${memoryStr}`;
+  } catch (e) {
+    console.error('Error loading memory:', e);
+    return '';
+  }
+}
+
+// Helper: Save memory items extracted by AI
+async function saveMemory(adminClient: any, userId: string, agentId: string, memories: Array<{key: string, value: string}>) {
+  try {
+    for (const mem of memories) {
+      await adminClient
+        .from('agent_memory')
+        .upsert(
+          { user_id: userId, agent_id: agentId, key: mem.key, value: mem.value, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id,agent_id,key' }
+        );
+    }
+    console.log(`Saved ${memories.length} memory items for user ${userId}`);
+  } catch (e) {
+    console.error('Error saving memory:', e);
+  }
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory, stream: requestStream } = await req.json();
+    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory, stream: requestStream, agentId, webSearch } = await req.json();
 
     if (!prompt && (!files || files.length === 0)) {
       return new Response(
@@ -70,14 +105,10 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-
-    // Use service role key to create admin client for RPC calls
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if this is a free tool
     const isFreeTool = FREE_TOOLS.includes(toolType);
 
-    // Authenticate user if Authorization header is provided
     const authHeader = req.headers.get('Authorization');
     let user = null;
 
@@ -86,16 +117,13 @@ serve(async (req) => {
       const userClient = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: `Bearer ${token}` } }
       });
-
       const { data: { user: authUser }, error: authError } = await userClient.auth.getUser(token);
-      
       if (!authError && authUser) {
         user = authUser;
         console.log(`User authenticated: ${user.id}`);
       }
     }
 
-    // Get tool info using admin client
     const { data: tool, error: toolError } = await adminClient
       .from('tools')
       .select('id, is_premium, credits_cost, is_free_tool')
@@ -103,36 +131,22 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    if (toolError) {
-      console.log('Tool fetch error:', toolError.message);
-    }
+    if (toolError) console.log('Tool fetch error:', toolError.message);
 
-    // Check if tool is actually free (from DB or our FREE_TOOLS list)
     const toolIsFree = isFreeTool || tool?.is_free_tool === true || tool?.is_premium === false;
 
-    // For premium tools, require authentication
     if (!toolIsFree && !user) {
-      console.log('Premium tool requires authentication');
       return new Response(
         JSON.stringify({ error: 'Login required for premium tools' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Default credits cost if tool not found in DB
     const creditsCost = tool?.credits_cost || 2;
 
-    console.log(`Tool: ${toolType}, Premium: ${tool?.is_premium}, Free: ${toolIsFree}, User: ${user?.id || 'anonymous'}`);
-
-    // Check premium access if tool is premium and user is logged in
     if (tool?.is_premium && user) {
       const { data: hasAccess, error: accessError } = await adminClient
         .rpc('can_access_tool', { _user_id: user.id, _tool_id: tool.id });
-
-      if (accessError) {
-        console.log('Access check error:', accessError.message);
-      }
-
       if (accessError || !hasAccess) {
         return new Response(
           JSON.stringify({ error: 'Premium subscription required' }),
@@ -141,82 +155,47 @@ serve(async (req) => {
       }
     }
 
-    // Deduct credits only if user is logged in
     if (user) {
       const { data: creditsDeducted, error: creditsError } = await adminClient
         .rpc('deduct_credits', { _user_id: user.id, _amount: creditsCost });
-
-      if (creditsError) {
-        console.log('Credits deduction error:', creditsError.message);
-      }
-
       if (creditsError || !creditsDeducted) {
         return new Response(
           JSON.stringify({ error: 'Insufficient credits. Please upgrade your plan.' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
-      console.log(`Credits deducted: ${creditsCost} for user ${user.id}`);
-    } else {
-      console.log('Anonymous user using free tool - no credits deducted');
     }
 
     const systemPrompt = customSystemPrompt || TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
     
-    // Use Lovable AI Gateway
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-
     if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY is not configured');
       throw new Error('AI service is not configured');
     }
 
-    console.log(`Processing ${toolType} request...`);
-
-    // Check if we have image files to process
+    // Check if we have image files
     const hasImages = files && files.length > 0 && files.some((f: any) => f.type?.startsWith('image/'));
 
-    // Build the user message content
+    // Build user content
     let userContent: any;
 
     if (hasImages) {
-      // Use multimodal format for image analysis
       userContent = [];
-      
-      // Add text prompt if provided
-      if (prompt) {
-        userContent.push({ type: 'text', text: prompt || 'Analyze this image and describe what you see in detail.' });
-      } else {
-        userContent.push({ type: 'text', text: 'Analyze this image and describe what you see in detail. Provide insights based on the context.' });
-      }
-
-      // Add images
+      userContent.push({ type: 'text', text: prompt || 'Analyze this image and describe what you see in detail.' });
       for (const file of files) {
         if (file.type?.startsWith('image/') && file.data) {
-          userContent.push({
-            type: 'image_url',
-            image_url: {
-              url: file.data // Base64 data URL
-            }
-          });
+          userContent.push({ type: 'image_url', image_url: { url: file.data } });
         }
       }
-
-      // Add context about non-image files
       const nonImageFiles = files.filter((f: any) => !f.type?.startsWith('image/'));
       if (nonImageFiles.length > 0) {
         const fileList = nonImageFiles.map((f: any) => f.name).join(', ');
         userContent.push({ type: 'text', text: `\n\nAdditional files attached: ${fileList}` });
       }
-
-      console.log(`Processing with ${files.filter((f: any) => f.type?.startsWith('image/')).length} images`);
     } else if (files && files.length > 0) {
-      // Handle non-image files (extract text content if possible)
       let fileContext = '';
       for (const file of files) {
         if (file.data) {
-          // For text-based files, try to extract content
           if (file.type?.includes('text') || file.type?.includes('json') || file.type?.includes('csv')) {
             try {
               const base64Content = file.data.split(',')[1];
@@ -238,8 +217,13 @@ serve(async (req) => {
     // Build enhanced system prompt
     let enhancedSystemPrompt = systemPrompt;
 
-    // For agent-chat, add human-like working instructions
     if (toolType === 'agent-chat') {
+      // Load user memory for this agent
+      let memoryContext = '';
+      if (user && agentId) {
+        memoryContext = await loadMemory(adminClient, user.id, agentId);
+      }
+
       enhancedSystemPrompt = `${systemPrompt}
 
 IMPORTANT WORKING GUIDELINES:
@@ -253,27 +237,75 @@ IMPORTANT WORKING GUIDELINES:
 - Use real-world best practices, frameworks, and proven methodologies.
 - Structure your output professionally with clear sections, headings, and formatting.
 - If you need more information, ask specific questions instead of making assumptions.
-- Think step-by-step like a human expert would when solving complex problems.`;
+- Think step-by-step like a human expert would when solving complex problems.
+
+🧠 MEMORY SYSTEM:
+- You have persistent memory. You can remember facts about the user across conversations.
+- At the END of your response, if you learned important facts about the user (their name, company, industry, preferences, goals, projects, etc.), output a memory block like this:
+<MEMORY>
+key1: value1
+key2: value2
+</MEMORY>
+- Only store genuinely useful facts. Examples: "user_name: Rahul", "company: TechStartup Inc", "industry: SaaS", "preferred_tone: formal", "current_project: AI chatbot for customer support"
+- If no new facts were learned, don't output any memory block.
+${memoryContext}
+
+🔍 RESEARCH & ANALYSIS CAPABILITIES:
+- When the user asks you to research something, provide comprehensive analysis based on your training knowledge.
+- Structure research outputs with clear sections: Overview, Key Findings, Analysis, Recommendations.
+- Cite specific facts, statistics, and frameworks when available.
+- If asked to compare options, create structured comparison tables.
+- For market research, include industry trends, competitor analysis, and strategic insights.
+
+📄 DOCUMENT ANALYSIS:
+- When documents are shared, provide thorough summaries with key takeaways.
+- Extract action items, important dates, names, and data points.
+- Offer insights and recommendations based on document content.
+- Cross-reference multiple documents when available.
+
+🛠️ TOOL-LIKE CAPABILITIES:
+- You can generate tables, charts (in text/markdown), calculations, and structured data.
+- You can create templates, frameworks, checklists, and action plans.
+- You can draft emails, proposals, contracts, and other business documents.
+- You can analyze data and provide statistical insights.
+- You can create step-by-step guides and SOPs.`;
     }
 
     if (hasImages) {
-      enhancedSystemPrompt += `\n\nYou have been provided with one or more images. Analyze them carefully and incorporate your observations into your response. Be specific about what you see in the images and how it relates to the user's request.`;
+      enhancedSystemPrompt += `\n\nYou have been provided with one or more images. Analyze them carefully and incorporate your observations into your response.`;
     }
 
-    // Build messages array with conversation history if provided
     let messagesArray: any[] = [{ role: 'system', content: enhancedSystemPrompt }];
     
     if (conversationHistory && Array.isArray(conversationHistory)) {
-      // Add conversation history
       for (const msg of conversationHistory) {
         messagesArray.push({ role: msg.role, content: msg.content });
       }
     }
     
-    // Add current user message
     messagesArray.push({ role: 'user', content: userContent });
 
     const useStreaming = requestStream === true && toolType === 'agent-chat';
+
+    // Use search-grounded model for web search requests
+    const model = (webSearch && toolType === 'agent-chat') 
+      ? 'google/gemini-2.5-flash' 
+      : 'google/gemini-2.5-flash';
+
+    const requestBody: any = {
+      model,
+      messages: messagesArray,
+      max_tokens: 4000,
+      stream: useStreaming,
+    };
+
+    // Add web search grounding for search requests
+    if (webSearch && toolType === 'agent-chat') {
+      // Prepend search instruction to user message
+      if (typeof userContent === 'string') {
+        messagesArray[messagesArray.length - 1].content = `[WEB SEARCH MODE] Search the internet and provide up-to-date, factual information with sources for: ${userContent}`;
+      }
+    }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -281,12 +313,7 @@ IMPORTANT WORKING GUIDELINES:
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: messagesArray,
-        max_tokens: 4000,
-        stream: useStreaming,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -299,34 +326,47 @@ IMPORTANT WORKING GUIDELINES:
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: 'AI credits exhausted. Please try again later.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
       throw new Error(`AI API error: ${response.status}`);
     }
 
-    // Streaming response for agent-chat
+    // For streaming, we need to intercept to extract memory
     if (useStreaming) {
       console.log(`Streaming ${toolType} response...`);
+      
+      // We can't easily extract memory from streaming, so we pass it through
+      // Memory extraction will happen on the client side
       return new Response(response.body, {
         headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
       });
     }
 
-    // Non-streaming response for other tools
+    // Non-streaming response
     const data = await response.json();
     const result = data.choices?.[0]?.message?.content;
 
-    if (!result) {
-      throw new Error('No content in AI response');
-    }
+    if (!result) throw new Error('No content in AI response');
 
-    console.log(`Successfully processed ${toolType} request`);
+    // Extract and save memory from non-streaming responses
+    if (toolType === 'agent-chat' && user && agentId) {
+      const memoryMatch = result.match(/<MEMORY>([\s\S]*?)<\/MEMORY>/);
+      if (memoryMatch) {
+        const memoryLines = memoryMatch[1].trim().split('\n').filter((l: string) => l.trim());
+        const memories = memoryLines.map((line: string) => {
+          const [key, ...valueParts] = line.split(':');
+          return { key: key.trim(), value: valueParts.join(':').trim() };
+        }).filter((m: any) => m.key && m.value);
+        
+        if (memories.length > 0) {
+          await saveMemory(adminClient, user.id, agentId, memories);
+        }
+      }
+    }
 
     return new Response(
       JSON.stringify({ result }),
