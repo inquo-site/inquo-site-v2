@@ -14,8 +14,14 @@ import {
   Headphones, Target, Search, TrendingUp, FileText, Users, Scale, 
   Wrench, DollarSign, Pen, BarChart, Package, Trash2, Copy, Download,
   CheckCircle2, Zap, Lock, Paperclip, Image, File, X, LinkIcon,
-  Brain, Globe, FileSearch, Database
+  Brain, Globe, FileSearch, Database, ChevronDown
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 interface Agent {
