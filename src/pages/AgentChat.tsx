@@ -978,7 +978,7 @@ const AgentChat = () => {
           </div>
           <p className="text-xs text-muted-foreground text-center mt-2">
             {hasAccess 
-              ? `🧠 Memory${memoryItems.length > 0 ? ` (${memoryItems.length})` : ''} • 🔍 ${webSearchEnabled ? 'Search ON' : 'Search OFF'} • 📎 Files • 🔗 Links • 🛠️ Pro Tools` 
+              ? `🧠 Memory${memoryItems.length > 0 ? ` (${memoryItems.length})` : ''} • 🔍 ${webSearchEnabled ? 'Search ON' : 'Search OFF'} • 📎 Files • 🔗 Links • ${selectedModel === 'gemini' ? '✨ Gemini' : selectedModel === 'deepseek' ? '🐋 DeepSeek' : '🤖 ChatGPT'}` 
               : "Subscribe to unlock this agent's capabilities."}
           </p>
         </div>
