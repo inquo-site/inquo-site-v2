@@ -928,7 +928,34 @@ const AgentChat = () => {
               >
                 <Brain className="w-4 h-4" />
               </Button>
-            </div>
+
+              {/* Model Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 text-xs gap-1 px-2"
+                    disabled={sending || !hasAccess}
+                  >
+                    {selectedModel === 'gemini' && '✨ Gemini'}
+                    {selectedModel === 'deepseek' && '🐋 DeepSeek'}
+                    {selectedModel === 'chatgpt' && '🤖 ChatGPT'}
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => { setSelectedModel('gemini'); toast.success('Model: Gemini'); }}>
+                    ✨ Gemini Flash
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSelectedModel('deepseek'); toast.success('Model: DeepSeek'); }}>
+                    🐋 DeepSeek
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { setSelectedModel('chatgpt'); toast.success('Model: ChatGPT'); }}>
+                    🤖 ChatGPT
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
             <Textarea
               ref={textareaRef}
