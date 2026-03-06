@@ -310,7 +310,7 @@ const AgentChat = () => {
     return date.toLocaleDateString();
   };
 
-
+  const fetchAgent = async () => {
     try {
       const { data, error } = await supabase
         .from("ai_agents")
