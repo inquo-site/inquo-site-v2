@@ -287,10 +287,15 @@ ${memoryContext}
 
     const useStreaming = requestStream === true && toolType === 'agent-chat';
 
-    // Use search-grounded model for web search requests
-    const model = (webSearch && toolType === 'agent-chat') 
-      ? 'google/gemini-2.5-flash' 
-      : 'google/gemini-2.5-flash';
+    // Model selection: user can pick gemini, deepseek, or chatgpt
+    const MODEL_MAP: Record<string, string> = {
+      'gemini': 'google/gemini-2.5-flash',
+      'deepseek': 'deepseek-chat',
+      'chatgpt': 'openai/gpt-5-mini',
+    };
+
+    const isDeepSeek = selectedModel === 'deepseek';
+    const model = MODEL_MAP[selectedModel] || 'google/gemini-2.5-flash';
 
     const requestBody: any = {
       model,
@@ -301,18 +306,30 @@ ${memoryContext}
 
     // Add web search grounding for search requests
     if (webSearch && toolType === 'agent-chat') {
-      // Prepend search instruction to user message
       if (typeof userContent === 'string') {
         messagesArray[messagesArray.length - 1].content = `[WEB SEARCH MODE] Search the internet and provide up-to-date, factual information with sources for: ${userContent}`;
       }
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Route to DeepSeek API or Lovable AI Gateway
+    let apiUrl: string;
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+    if (isDeepSeek) {
+      const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
+      if (!DEEPSEEK_API_KEY) {
+        throw new Error('DeepSeek API key is not configured');
+      }
+      apiUrl = 'https://api.deepseek.com/chat/completions';
+      headers['Authorization'] = `Bearer ${DEEPSEEK_API_KEY}`;
+    } else {
+      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+      headers['Authorization'] = `Bearer ${LOVABLE_API_KEY}`;
+    }
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(requestBody),
     });
 
