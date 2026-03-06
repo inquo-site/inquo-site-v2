@@ -153,6 +153,7 @@ const AgentChat = () => {
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [showMemory, setShowMemory] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<'gemini' | 'deepseek' | 'chatgpt'>('gemini');
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
