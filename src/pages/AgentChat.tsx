@@ -435,6 +435,7 @@ const AgentChat = () => {
         stream: true,
         agentId: agentId,
         webSearch: webSearchEnabled,
+        selectedModel: selectedModel,
       };
 
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tool`;
