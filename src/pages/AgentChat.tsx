@@ -169,6 +169,9 @@ const AgentChat = () => {
   const [memoryItems, setMemoryItems] = useState<MemoryItem[]>([]);
   const [showMemory, setShowMemory] = useState(false);
   const [selectedModel, setSelectedModel] = useState<'gemini' | 'deepseek' | 'chatgpt'>('gemini');
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loadingConversations, setLoadingConversations] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
