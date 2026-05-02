@@ -14,8 +14,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        heading: ['Poppins', 'sans-serif'],
+        sans: ['Space Grotesk', 'Inter', 'sans-serif'],
+        heading: ['Space Grotesk', 'Poppins', 'sans-serif'],
+        display: ['Space Grotesk', 'sans-serif'],
+        script: ['"Cormorant Garamond"', '"Dancing Script"', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
