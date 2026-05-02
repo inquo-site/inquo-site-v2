@@ -289,19 +289,22 @@ export default function NewLanding() {
         </div>
       </section>
 
-      {/* Social Proof Banner */}
-      <section className="py-6 bg-muted/50 border-y border-border overflow-hidden">
-        <div className="flex animate-scroll whitespace-nowrap">
-          {[...Array(2)].map((_, i) => (
-            <div key={i} className="flex items-center gap-12 px-6">
-              <span className="text-muted-foreground font-medium">Trusted by:</span>
-              <span className="font-bold text-lg">Agencies</span>
-              <span className="font-bold text-lg">Startups</span>
-              <span className="font-bold text-lg">Freelancers</span>
-              <span className="font-bold text-lg">E-commerce</span>
-              <span className="font-bold text-lg">SaaS Companies</span>
-            </div>
-          ))}
+      {/* Trusted by — refined marquee */}
+      <section className="py-10 border-y border-border overflow-hidden bg-background">
+        <div className="flex items-center gap-16">
+          <div className="shrink-0 pl-6 text-xs uppercase tracking-[0.3em] text-muted-foreground">Trusted by</div>
+          <div className="flex ns-marquee whitespace-nowrap">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="flex items-center gap-16 pr-16 text-2xl font-display tracking-tight text-foreground/40">
+                <span>Agencies</span><span className="text-primary/60">/</span>
+                <span>Startups</span><span className="text-primary/60">/</span>
+                <span>Freelancers</span><span className="text-primary/60">/</span>
+                <span>E-commerce</span><span className="text-primary/60">/</span>
+                <span>SaaS</span><span className="text-primary/60">/</span>
+                <span>Enterprises</span><span className="text-primary/60">/</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
