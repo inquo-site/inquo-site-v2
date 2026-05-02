@@ -445,29 +445,27 @@ export default function NewLanding() {
 
       {/* AI Agents Section */}
       {agents.length > 0 && (
-        <section className="py-24 px-4 bg-muted/30">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-12 gap-4">
-              <div>
-                <Badge className="mb-4 px-4 py-1" variant="secondary">
-                  <Bot className="w-3 h-3 mr-1" /> AI Agents
-                </Badge>
-                <h2 className="text-3xl sm:text-4xl font-bold mb-2">
-                  AI Agents That <span className="text-gradient">Do Real Work</span>
-                </h2>
-                <p className="text-lg text-muted-foreground">
-                  Autonomous AI workers that produce complete deliverables for your business
-                </p>
+        <section className="relative py-28 px-4 overflow-hidden">
+          <NSBackdrop intensity="subtle" />
+          <div className="max-w-7xl mx-auto relative z-10">
+            <Reveal>
+              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-14 gap-6">
+                <div className="max-w-2xl">
+                  <div className="text-xs uppercase tracking-[0.25em] text-primary mb-5 flex items-center gap-3">
+                    <span className="h-px w-8 bg-primary/60" /> AI Agents
+                  </div>
+                  <h2 className="font-display text-4xl sm:text-5xl tracking-[-0.035em] leading-[1]">
+                    Agents that <span className="font-script text-primary">do real work</span>
+                  </h2>
+                  <p className="mt-5 text-muted-foreground">
+                    Autonomous AI workers that ship complete deliverables for your team.
+                  </p>
+                </div>
+                <NSCta to="/agents" variant="outline">View All Agents</NSCta>
               </div>
-              <Button asChild variant="outline" size="lg">
-                <Link to="/agents">
-                  View All Agents
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
-              </Button>
-            </div>
+            </Reveal>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {agents.map((agent, index) => {
                 const AgentIcon = agentIconMap[agent.icon] || Bot;
                 const isINR = !localStorage.getItem("selectedCountry") || localStorage.getItem("selectedCountry") === "IN";
@@ -476,27 +474,29 @@ export default function NewLanding() {
                 const isFree = price === 0;
 
                 return (
-                  <Link key={agent.id} to="/agents">
-                    <Card className="p-6 h-full hover:scale-[1.02] transition-all duration-300 cursor-pointer hover:shadow-xl border-2 hover:border-primary/50 animate-fade-in group relative overflow-hidden"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
-                      
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
-                          <AgentIcon className="w-6 h-6 text-primary" />
+                  <Reveal key={agent.id} delay={index * 80}>
+                    <Link to="/agents" className="group block h-full">
+                      <div className="ns-lift relative h-full p-7 rounded-2xl border border-border bg-card overflow-hidden">
+                        <div className="absolute -top-16 -right-16 w-44 h-44 rounded-full bg-primary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                        <div className="relative">
+                          <div className="flex items-start justify-between mb-6">
+                            <div className="w-11 h-11 rounded-xl border border-border flex items-center justify-center group-hover:border-primary/60 transition-colors">
+                              <AgentIcon className="w-5 h-5 text-primary" />
+                            </div>
+                            <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                              {isFree ? 'Free' : `${symbol}${price?.toLocaleString()}/mo`}
+                            </span>
+                          </div>
+                          <h3 className="font-display text-xl mb-2 tracking-tight group-hover:text-primary transition-colors">{agent.name}</h3>
+                          <p className="text-sm text-muted-foreground mb-6 line-clamp-2 leading-relaxed">{agent.description}</p>
+                          <div className="flex items-center gap-2 text-sm ns-link">
+                            <Briefcase className="w-4 h-4" /> Start Work
+                            <ArrowRight className="w-4 h-4 ml-1 transition-transform duration-500 group-hover:translate-x-1" />
+                          </div>
                         </div>
-                        <Badge variant={isFree ? 'outline' : 'default'} className="font-medium text-xs">
-                          {isFree ? '🆓 Free' : `${symbol}${price?.toLocaleString()}/mo`}
-                        </Badge>
                       </div>
-                      <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors">{agent.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{agent.description}</p>
-                      <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-colors">
-                        <Briefcase className="w-4 h-4 mr-2" /> Start Work <ArrowRight className="ml-2 w-4 h-4" />
-                      </Button>
-                    </Card>
-                  </Link>
+                    </Link>
+                  </Reveal>
                 );
               })}
             </div>
