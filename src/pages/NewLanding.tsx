@@ -306,81 +306,84 @@ export default function NewLanding() {
       </section>
 
       {/* Why Businesses Choose InQuo */}
-      <section className="py-24 px-4 bg-muted/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 px-4 py-1">For Businesses</Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-              Why Businesses Choose <span className="text-gradient">InQuo.Site</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Designed specifically for teams and businesses who need reliable AI automation at scale
-            </p>
-          </div>
+      <section className="relative py-28 px-4 overflow-hidden">
+        <NSBackdrop intensity="subtle" />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <Reveal>
+            <div className="mb-16 max-w-3xl">
+              <div className="text-xs uppercase tracking-[0.25em] text-primary mb-5 flex items-center gap-3">
+                <span className="h-px w-8 bg-primary/60" /> For Businesses
+              </div>
+              <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl tracking-[-0.035em] text-foreground leading-[1]">
+                Why teams choose <span className="font-script text-primary">InQuo</span>
+              </h2>
+              <p className="mt-6 text-lg text-muted-foreground max-w-xl">
+                Designed for teams that need reliable AI automation at scale — without the bloat.
+              </p>
+            </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border rounded-2xl overflow-hidden border border-border">
             {whyBusinessesChoose.map((item, index) => (
-              <Card 
-                key={index} 
-                className="p-6 hover:shadow-xl transition-all duration-300 border-2 hover:border-accent/30 group animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
-                  <item.icon className="w-7 h-7 text-accent" />
+              <Reveal key={index} delay={index * 100}>
+                <div className="ns-lift bg-card p-8 h-full group">
+                  <div className="w-12 h-12 rounded-xl border border-border flex items-center justify-center mb-6 group-hover:border-primary/60 group-hover:bg-primary/5 transition-colors">
+                    <item.icon className="w-5 h-5 text-primary" />
+                  </div>
+                  <h3 className="font-display text-xl mb-3 tracking-tight">{item.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
                 </div>
-                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                <p className="text-muted-foreground text-sm">{item.description}</p>
-              </Card>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* Categories Section */}
-      <section className="py-24 px-4">
+      <section className="relative py-28 px-4 overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 px-4 py-1">4 Categories</Badge>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-              One Platform, <span className="text-gradient">Endless Possibilities</span>
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose from our carefully organized AI tool categories — each packed with powerful tools
-            </p>
-          </div>
+          <Reveal>
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-16">
+              <div className="max-w-3xl">
+                <div className="text-xs uppercase tracking-[0.25em] text-primary mb-5 flex items-center gap-3">
+                  <span className="h-px w-8 bg-primary/60" /> Capabilities
+                </div>
+                <h2 className="font-display text-4xl sm:text-5xl lg:text-6xl tracking-[-0.035em] leading-[1]">
+                  One platform.
+                  <br />
+                  <span className="font-script text-primary">Endless</span> possibilities.
+                </h2>
+              </div>
+              <p className="text-muted-foreground max-w-sm">
+                Carefully organized AI categories — each packed with powerful, production-grade tools.
+              </p>
+            </div>
+          </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {mainCategories.map((category, index) => (
-              <Link 
-                key={category.id} 
-                to={`/dashboard?category=${category.id}`}
-                className="group"
-              >
-                <Card className="p-8 h-full hover:scale-105 transition-all duration-300 cursor-pointer border-2 hover:border-accent hover:shadow-xl animate-scale-in relative overflow-hidden"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${category.color} opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity`} />
-                  
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform shadow-lg`}>
-                    <category.icon className="w-8 h-8 text-white" />
+              <Reveal key={category.id} delay={index * 100}>
+                <Link to={`/dashboard?category=${category.id}`} className="group block h-full">
+                  <div className="ns-lift relative h-full p-8 rounded-2xl border border-border bg-card overflow-hidden">
+                    <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-primary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-xl border border-border flex items-center justify-center mb-6 group-hover:border-primary/60 transition-colors">
+                        <category.icon className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-display text-2xl tracking-tight">{category.name}</h3>
+                        <span className="text-xs text-primary/80">/{category.tools}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
+                        {category.description}
+                      </p>
+                      <div className="flex items-center gap-2 text-sm text-foreground ns-link">
+                        Explore <ArrowRight className="w-4 h-4 transition-transform duration-500 group-hover:translate-x-1" />
+                      </div>
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-xl font-bold group-hover:text-accent transition-colors">
-                      {category.name}
-                    </h3>
-                    <Badge variant="secondary" className="text-xs">{category.tools}</Badge>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {category.description}
-                  </p>
-                  
-                  <div className="flex items-center text-accent font-medium text-sm group-hover:gap-2 transition-all">
-                    Explore tools <ArrowRight className="w-4 h-4 ml-1" />
-                  </div>
-                </Card>
-              </Link>
+                </Link>
+              </Reveal>
             ))}
           </div>
         </div>
