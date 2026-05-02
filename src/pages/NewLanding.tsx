@@ -13,6 +13,9 @@ import { ValueProposition } from "@/components/ValueProposition";
 import { ReviewsSection } from "@/components/ReviewsSection";
 import { InternalLinking } from "@/components/InternalLinking";
 import { useABTest } from "@/hooks/useABTesting";
+import { NSCta } from "@/components/ns/NSCta";
+import { Reveal } from "@/components/ns/Reveal";
+import { NSBackdrop } from "@/components/ns/NSBackdrop";
 import { 
   Sparkles, Code2, Palette, TrendingUp, Search, 
   Zap, Shield, ArrowRight, Star, Users, Rocket,
