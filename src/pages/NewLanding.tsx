@@ -200,84 +200,92 @@ export default function NewLanding() {
       />
       <Navbar />
 
-      {/* Hero Section - B2B Focused */}
-      <section className="relative pt-28 pb-24 px-4 overflow-hidden">
-        {/* Animated Gradient Background */}
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-accent/5 to-background" />
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        </div>
-        
+      {/* Hero — Never Settle inspired */}
+      <section className="relative pt-36 pb-28 px-4 overflow-hidden bg-background">
+        <NSBackdrop intensity="hero" />
+
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center">
-            {/* No Hidden Charges Badge */}
-            <div className="inline-flex items-center gap-2 glass-card px-4 py-2 rounded-full mb-6 animate-fade-in border-2 border-green-500/30">
-              <BadgeCheck className="w-5 h-5 text-green-500" />
-              <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                ✓ No Hidden Charges • 7-Day Free Trial • Cancel Anytime
-              </span>
+          {/* Eyebrow */}
+          <Reveal immediate>
+            <div className="flex items-center gap-3 mb-10 text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              <span className="h-px w-10 bg-primary/60" />
+              Creative AI &amp; Automation Platform
             </div>
-            
-            {/* Main Headline - B2B */}
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold mb-6 leading-tight tracking-tight animate-fade-in">
-              All-in-One AI Automation
-              <br />
-              <span className="relative">
-                <span className="bg-gradient-to-r from-accent via-orange-500 to-yellow-500 bg-clip-text text-transparent">
-                  Platform for Businesses
-                </span>
-              </span>
-            </h1>
-            
-            {/* Sub-headline */}
-            <p className="text-lg sm:text-xl lg:text-2xl text-muted-foreground mb-10 max-w-3xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '100ms' }}>
-              160+ AI tools for content, code, design & marketing. 
-              <span className="text-foreground font-medium"> Trusted by 10,000+ agencies, freelancers & startups</span>. 
-              Save 20+ hours every week.
-            </p>
+          </Reveal>
 
-            {/* CTAs - B2B focused with A/B Testing */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
-              <Button 
-                asChild 
-                size="lg" 
-                className={`text-lg px-10 h-14 rounded-xl shadow-lg hover:shadow-xl transition-all group ${
-                  ctaColor.variant === 'gradient' 
-                    ? 'bg-gradient-to-r from-accent to-orange-500 hover:from-accent/90 hover:to-orange-500/90' 
-                    : 'bg-accent hover:bg-accent/90'
-                }`}
-                onClick={handleCTAClick}
-              >
-                <Link to="/dashboard">
-                  {heroCTA.variant === 'try_now' ? 'Try Now Free' : 'Start Free Trial'}
-                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="text-lg px-10 h-14 rounded-xl border-2">
-                <Link to="/pricing">
-                  Buy Business Plan
-                  <Building2 className="ml-2 w-5 h-5" />
-                </Link>
-              </Button>
+          <div className="grid lg:grid-cols-12 gap-10 items-end">
+            {/* Headline */}
+            <div className="lg:col-span-8">
+              <Reveal immediate delay={80}>
+                <h1 className="font-display text-[3rem] sm:text-[4.5rem] lg:text-[6.5rem] leading-[0.95] tracking-[-0.04em] text-foreground">
+                  Building <span className="font-script text-primary">Brands</span>
+                  <br />
+                  That <span className="italic font-light">Move</span> The
+                  <br />
+                  <span className="ns-shimmer-text">World With AI</span>
+                </h1>
+              </Reveal>
+
+              <Reveal delay={250}>
+                <div className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 text-base sm:text-lg text-muted-foreground">
+                  <span>On Time</span>
+                  <span className="text-primary/70">/</span>
+                  <span>On Budget</span>
+                  <span className="text-primary/70">/</span>
+                  <span className="text-foreground">Never Settle</span>
+                </div>
+              </Reveal>
+
+              <Reveal delay={380}>
+                <p className="mt-8 max-w-xl text-base sm:text-lg text-muted-foreground leading-relaxed">
+                  160+ AI tools and autonomous agents for content, code, design and marketing.
+                  Trusted by 10,000+ teams to ship faster — without compromise.
+                </p>
+              </Reveal>
+
+              <Reveal delay={500}>
+                <div className="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <NSCta to="/dashboard" size="lg" variant="solid" onClick={handleCTAClick}>
+                    Start Free Trial
+                  </NSCta>
+                  <NSCta to="/pricing" size="lg" variant="outline">
+                    Upgrade to Pro
+                  </NSCta>
+                </div>
+              </Reveal>
             </div>
 
+            {/* Side review card */}
+            <div className="lg:col-span-4">
+              <Reveal delay={600}>
+                <div className="ns-lift relative rounded-2xl border border-border bg-card/60 backdrop-blur-xl p-6">
+                  <div className="flex gap-1 mb-3 text-primary">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-current" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-foreground/90 leading-relaxed">
+                    "Super communicative and easy to work with. InQuo hit the ground running and changed how our team ships."
+                  </p>
+                  <div className="mt-4 pt-4 border-t border-border text-xs text-muted-foreground">
+                    Jason Theraube <span className="text-primary mx-1">/</span> Selfbook
+                  </div>
+                </div>
+              </Reveal>
+            </div>
+          </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 max-w-4xl mx-auto">
+          {/* Stats strip */}
+          <Reveal delay={720}>
+            <div className="mt-20 grid grid-cols-2 sm:grid-cols-4 border-y border-border divide-x divide-border">
               {stats.map((stat, index) => (
-                <div 
-                  key={index} 
-                  className="glass-card p-5 rounded-2xl animate-slide-up hover:scale-105 transition-transform"
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
-                  <stat.icon className={`w-7 h-7 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-2xl sm:text-3xl font-bold text-foreground">{stat.value}</div>
-                  <div className="text-xs sm:text-sm text-muted-foreground">{stat.label}</div>
+                <div key={index} className="px-6 py-8 text-center sm:text-left">
+                  <div className="font-display text-3xl sm:text-4xl text-foreground mb-1">{stat.value}</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{stat.label}</div>
                 </div>
               ))}
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
