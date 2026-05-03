@@ -140,4 +140,28 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- Agents -->
+  <url>
+    <loc>https://inquo.site/agents</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://inquo.site/projects</loc>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Canonical /tool/:slug routes -->
+  <url><loc>https://inquo.site/tool/chat</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo.site/tool/image</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo.site/tool/code</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo.site/tool/blog</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo.site/tool/grammar</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo.site/tool/summarizer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo.site/tool/ad-copy</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
 </urlset>
