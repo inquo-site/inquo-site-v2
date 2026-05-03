@@ -227,17 +227,17 @@ export const Footer = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-border">
+      <div className="relative border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
               © {new Date().getFullYear()} Inquo.Site. All rights reserved.
             </p>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link to="/privacy" className="hover:text-accent transition-colors">Privacy</Link>
-              <Link to="/privacy" className="hover:text-accent transition-colors">Terms</Link>
-              <Link to="/contact" className="hover:text-accent transition-colors">Cookies</Link>
-              <span>Made with ❤️ for AI enthusiasts</span>
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <Link to="/privacy" className="ns-slash hover:text-accent transition-colors">Privacy</Link>
+              <Link to="/privacy" className="ns-slash hover:text-accent transition-colors">Terms</Link>
+              <Link to="/contact" className="ns-slash hover:text-accent transition-colors">Cookies</Link>
+              <span className="font-script italic text-accent/80">Made with ❤️ for AI enthusiasts</span>
             </div>
           </div>
         </div>
