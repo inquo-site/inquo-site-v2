@@ -169,36 +169,24 @@ const Agents = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8 mt-16">
-        {/* Hero */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4">
-            <Zap className="w-4 h-4" />
-            <span className="text-sm font-medium">Autonomous AI Workers</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            AI Agents That <span className="text-primary">Do Real Work</span>
-          </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Not just chatbots — these agents produce complete deliverables. Get ready-to-use 
-            reports, emails, documents, and strategies in seconds.
+      <main className="container mx-auto px-4 py-12 mt-16 max-w-6xl">
+        {/* Hero - simplified */}
+        <div className="mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">AI Agents</h1>
+          <p className="text-muted-foreground text-base max-w-2xl">
+            Specialized agents that produce ready-to-use deliverables — reports, emails, documents, and more.
           </p>
-          <div className="flex items-center justify-center gap-6 mt-6 text-sm text-muted-foreground flex-wrap">
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-green-500" /> Ready-to-use outputs</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-green-500" /> Copy & download</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-green-500" /> Autonomous execution</span>
-          </div>
         </div>
 
         {/* Search and Filter */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex flex-col md:flex-row gap-3 mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search agents..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button variant={selectedCategory === null ? "default" : "outline"} size="sm" onClick={() => setSelectedCategory(null)}>
-              <Filter className="w-4 h-4 mr-1" /> All
+              All
             </Button>
             {categories.map(cat => (
               <Button key={cat} variant={selectedCategory === cat ? "default" : "outline"} size="sm" onClick={() => setSelectedCategory(cat)}>
@@ -208,69 +196,55 @@ const Agents = () => {
           </div>
         </div>
 
-        {/* Agents Grid */}
+        {/* Agents Grid - simplified */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(8)].map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
               <Card key={i} className="animate-pulse">
-                <CardHeader><div className="w-12 h-12 bg-muted rounded-lg mb-2" /><div className="h-6 bg-muted rounded w-3/4" /><div className="h-4 bg-muted rounded w-full mt-2" /></CardHeader>
+                <CardHeader>
+                  <div className="w-10 h-10 bg-muted rounded-lg mb-2" />
+                  <div className="h-5 bg-muted rounded w-3/4" />
+                  <div className="h-4 bg-muted rounded w-full mt-2" />
+                </CardHeader>
               </Card>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredAgents.map((agent) => {
-              const capabilities = agentCapabilities[agent.name] || [];
               const isFree = agent.monthly_price === 0;
               const hasAccess = isFree || subscribedAgentIds.has(agent.id);
-              
+
               return (
-                <Card 
-                  key={agent.id} 
-                  className="group cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all duration-300 relative overflow-hidden"
+                <Card
+                  key={agent.id}
+                  className="cursor-pointer hover:border-primary/50 transition-colors"
                   onClick={() => handleAgentClick(agent)}
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/10 transition-colors" />
-                  
-                  <CardHeader className="relative pb-2">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="p-3 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
-                        <IconComponent iconName={agent.icon} className="w-6 h-6 text-primary" />
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="p-2.5 bg-primary/10 rounded-lg">
+                        <IconComponent iconName={agent.icon} className="w-5 h-5 text-primary" />
                       </div>
-                      <div className="flex gap-1 items-center">
-                        {hasAccess ? (
-                          <Badge variant="outline" className="text-[10px] border-green-500/50 text-green-600">
-                            <CheckCircle2 className="w-3 h-3 mr-0.5" /> Access
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-[10px]">
-                            {formatPrice(agent, "monthly")}/mo
-                          </Badge>
-                        )}
-                      </div>
+                      {hasAccess ? (
+                        <Badge variant="outline" className="text-xs border-green-500/50 text-green-600">
+                          <CheckCircle2 className="w-3 h-3 mr-1" /> Access
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs">
+                          {formatPrice(agent, "monthly")}/mo
+                        </Badge>
+                      )}
                     </div>
-                    <CardTitle className="text-lg group-hover:text-primary transition-colors">{agent.name}</CardTitle>
-                    <CardDescription className="line-clamp-2">{agent.description}</CardDescription>
+                    <CardTitle className="text-base">{agent.name}</CardTitle>
+                    <CardDescription className="line-clamp-2 text-sm">{agent.description}</CardDescription>
                   </CardHeader>
-                  
-                  <CardContent className="pt-0">
-                    {capabilities.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {capabilities.slice(0, 3).map((cap) => (
-                          <span key={cap} className="text-[10px] bg-muted px-2 py-0.5 rounded-full text-muted-foreground">{cap}</span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">{categoryLabels[agent.category] || agent.category}</Badge>
-                      <Button size="sm" variant="ghost" className="gap-1 text-primary">
-                        {hasAccess ? (
-                          <><Briefcase className="w-4 h-4" /> Start Work</>
-                        ) : (
-                          <><Lock className="w-4 h-4" /> Get Access</>
-                        )}
-                      </Button>
-                    </div>
+
+                  <CardContent className="pt-0 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{categoryLabels[agent.category] || agent.category}</span>
+                    <Button size="sm" variant="ghost" className="h-8 gap-1 text-primary">
+                      {hasAccess ? <>Start <Briefcase className="w-3.5 h-3.5" /></> : <>Unlock <Lock className="w-3.5 h-3.5" /></>}
+                    </Button>
                   </CardContent>
                 </Card>
               );
@@ -280,9 +254,9 @@ const Agents = () => {
 
         {filteredAgents.length === 0 && !loading && (
           <div className="text-center py-12">
-            <Bot className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No agents found</h3>
-            <p className="text-muted-foreground">Try adjusting your search or filter</p>
+            <Bot className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <h3 className="text-lg font-semibold mb-1">No agents found</h3>
+            <p className="text-sm text-muted-foreground">Try adjusting your search or filter</p>
           </div>
         )}
       </main>
