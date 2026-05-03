@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Eye } from "lucide-react";
 import DOMPurify from 'dompurify';
 import 'react-quill/dist/quill.snow.css';
+import { SEOHead } from "@/components/SEOHead";
 
 interface Blog {
   id: string;
