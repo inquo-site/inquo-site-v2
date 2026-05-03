@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Mail, Phone } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { SEOHead } from "@/components/SEOHead";
 import { z } from "zod";
 
 const emailSchema = z.object({
