@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { SEOHead } from "@/components/SEOHead";
 import { AgentPaymentModal } from "@/components/AgentPaymentModal";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -167,6 +168,19 @@ const Agents = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="AI Agents - Autonomous AI Workers"
+        description="Hire autonomous AI agents for support, sales, research, marketing, HR, legal & more. Get ready-to-use deliverables in seconds. Monthly, yearly, lifetime plans."
+        keywords="AI agents, autonomous AI, AI worker, sales agent, support agent, research agent, marketing AI, AI assistant, Inquo.site agents"
+        canonicalUrl="https://inquo.site/agents"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "AI Agents",
+          description: "Autonomous AI agents that produce ready-to-use deliverables.",
+          url: "https://inquo.site/agents",
+        }}
+      />
       <Navbar />
       
       <main className="container mx-auto px-4 py-12 mt-16 max-w-6xl">

@@ -1,8 +1,15 @@
 import { Card } from "@/components/ui/card";
+import { SEOHead } from "@/components/SEOHead";
 
 const Privacy = () => {
   return (
     <div className="min-h-screen py-20 px-4">
+      <SEOHead
+        title="Privacy Policy"
+        description="Read Inquo.Site's Privacy Policy. Learn how we collect, use, and protect your personal information across our AI tools platform."
+        keywords="privacy policy, data protection, Inquo.site privacy, GDPR, user data"
+        canonicalUrl="https://inquo.site/privacy"
+      />
       <div className="container mx-auto max-w-4xl">
         <div className="mb-12">
           <h1 className="text-5xl font-bold mb-4">Privacy Policy</h1>

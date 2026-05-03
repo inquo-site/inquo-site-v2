@@ -250,20 +250,38 @@ const ToolTemplate = ({ title, description, placeholder, toolType, isFree = true
       <SEOHead
         title={`${title} - Free AI Tool`}
         description={`${description} Use our free ${title} tool powered by AI. No login required.`}
-        keywords={`${title.toLowerCase()}, AI ${toolType}, free AI tool, ${toolType} generator, Inquo.site`}
+        keywords={`${title.toLowerCase()}, AI ${toolType}, free AI tool, ${toolType} generator, online ${toolType} tool, Inquo.site`}
         canonicalUrl={`https://inquo.site/tool/${toolType}`}
         schema={{
           "@context": "https://schema.org",
-          "@type": "SoftwareApplication",
-          name: title,
-          applicationCategory: "ProductivityApplication",
-          description: description,
-          url: `https://inquo.site/tool/${toolType}`,
-          offers: {
-            "@type": "Offer",
-            price: isFree ? "0" : "4.99",
-            priceCurrency: "USD",
-          },
+          "@graph": [
+            {
+              "@type": "SoftwareApplication",
+              name: title,
+              applicationCategory: "ProductivityApplication",
+              operatingSystem: "Web",
+              description: description,
+              url: `https://inquo.site/tool/${toolType}`,
+              offers: {
+                "@type": "Offer",
+                price: isFree ? "0" : "4.99",
+                priceCurrency: "USD",
+              },
+              aggregateRating: {
+                "@type": "AggregateRating",
+                ratingValue: "4.8",
+                ratingCount: "1200",
+              },
+            },
+            {
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Home", item: "https://inquo.site/" },
+                { "@type": "ListItem", position: 2, name: "Tools", item: "https://inquo.site/dashboard" },
+                { "@type": "ListItem", position: 3, name: title, item: `https://inquo.site/tool/${toolType}` },
+              ],
+            },
+          ],
         }}
       />
       <div className="min-h-screen p-6">

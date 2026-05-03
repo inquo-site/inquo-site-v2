@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navbar } from "@/components/Navbar";
+import { SEOHead } from "@/components/SEOHead";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -695,6 +696,12 @@ const AgentChat = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col" onDrop={handleDrop} onDragOver={handleDragOver}>
+      <SEOHead
+        title={agent ? `${agent.name} - AI Agent Chat` : "AI Agent Chat"}
+        description={agent ? `Chat with ${agent.name}: ${agent.description}. Get ready-to-use deliverables instantly.` : "Chat with autonomous AI agents on Inquo.Site."}
+        keywords={agent ? `${agent.name}, AI agent, ${agent.category}, autonomous AI, Inquo.site` : "AI agent chat, Inquo.site"}
+        canonicalUrl={agent ? `https://inquo.site/agent/${agent.id}` : "https://inquo.site/agents"}
+      />
       <Navbar />
       
       {/* Agent Header */}

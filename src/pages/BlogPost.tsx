@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, Eye } from "lucide-react";
 import DOMPurify from 'dompurify';
 import 'react-quill/dist/quill.snow.css';
+import { SEOHead } from "@/components/SEOHead";
 
 interface Blog {
   id: string;
@@ -80,8 +81,36 @@ export default function BlogPost() {
     );
   }
 
+  const plainText = useMemo(() => {
+    if (!blog?.content) return "";
+    return blog.content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+  }, [blog?.content]);
+
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={blog.title}
+        description={plainText || `Read ${blog.title} on the Inquo.Site blog.`}
+        keywords={`${blog.title}, AI blog, Inquo.site blog, AI tutorial`}
+        canonicalUrl={`https://inquo.site/blog/${slug}`}
+        ogImage={blog.featured_image || undefined}
+        ogType="article"
+        article={{
+          publishedTime: blog.published_at,
+          section: "AI",
+          author: "Inquo.Site",
+        }}
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "BlogPosting",
+          headline: blog.title,
+          image: blog.featured_image || undefined,
+          datePublished: blog.published_at,
+          author: { "@type": "Organization", name: "Inquo.Site" },
+          publisher: { "@type": "Organization", name: "Inquo.Site" },
+          url: `https://inquo.site/blog/${slug}`,
+        }}
+      />
       <article className="container mx-auto max-w-4xl px-4 py-12">
         <Link to="/blog">
           <Button variant="ghost" className="mb-8">
