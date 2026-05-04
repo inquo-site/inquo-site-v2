@@ -6,8 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// HARDCODED UPI ID - Cannot be changed by users
-const FIXED_UPI_ID = "webcraftmaster915@okicici";
+// UPI ID — overridable via PAYMENT_UPI_ID secret; falls back to default account.
+const FIXED_UPI_ID = Deno.env.get('PAYMENT_UPI_ID') ?? 'webcraftmaster915@okicici';
 
 // Platform plan pricing (in paise for INR, cents for USD)
 const PRICING = {
