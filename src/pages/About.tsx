@@ -89,6 +89,30 @@ const About = () => {
             </Card>
           </section>
 
+          <section className="glass-card p-8 rounded-2xl mb-16" aria-label="Founder">
+            <div className="flex flex-col md:flex-row gap-8 items-center">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center text-5xl font-bold text-background shrink-0">
+                SK
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <h2 className="text-3xl font-bold mb-2">
+                  Meet the <span className="text-gradient">Founder</span>
+                </h2>
+                <h3 className="text-2xl font-semibold mb-3">Suman Kumar</h3>
+                <p className="text-muted-foreground mb-4">
+                  Founder & CEO of InQuo.site — a passionate technologist from Purnea, Bihar, India,
+                  on a mission to make powerful AI tools accessible to creators, students, and
+                  professionals everywhere. Suman built InQuo.site to bring 160+ AI tools under one
+                  unified, affordable platform.
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li><strong className="text-foreground">Location:</strong> Purnea, Bihar, India - 854315</li>
+                  <li><strong className="text-foreground">Email:</strong> <a href="mailto:inquo4@gmail.com" className="text-accent hover:underline">inquo4@gmail.com</a></li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
           <section className="text-center glass-card p-8 rounded-2xl">
             <h2 className="text-3xl font-bold mb-4">Join Our Journey</h2>
             <p className="text-lg text-muted-foreground mb-6">
