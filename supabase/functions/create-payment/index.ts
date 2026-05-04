@@ -259,8 +259,17 @@ serve(async (req) => {
         );
       }
 
-      const utrRegex = /^[A-Za-z0-9]{10,30}$/;
-      if (!utrRegex.test(utr_number.trim())) {
+      const utrTrimmed = utr_number.trim().toUpperCase();
+      // Accept common Indian payment reference formats:
+      //  - 12-digit UPI UTR (e.g. 123456789012)
+      //  - Bank reference: 4 letters + 6-22 alphanumerics (e.g. HDFC1234567890)
+      //  - 16-22 digit NEFT/RTGS/IMPS references
+      const utrPatterns = [
+        /^[0-9]{12}$/,
+        /^[A-Z]{2,4}[A-Z0-9]{8,22}$/,
+        /^[0-9]{16,22}$/,
+      ];
+      if (!utrPatterns.some((p) => p.test(utrTrimmed))) {
         return new Response(
           JSON.stringify({ error: 'Invalid UTR/Transaction ID format' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
