@@ -1,9 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react";
-import useEmblaCarousel from "embla-carousel-react";
+import { useState, useEffect } from "react";
+import { Star, Quote, ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Testimonial {
   id: string;
@@ -15,6 +12,7 @@ interface Testimonial {
   rating: number;
   industry: string;
   result: string;
+  metric: string;
 }
 
 const testimonials: Testimonial[] = [
@@ -24,10 +22,12 @@ const testimonials: Testimonial[] = [
     role: "CEO",
     company: "TechStartup India",
     avatar: "RS",
-    content: "InQuo.site transformed our content workflow completely. We now produce 5x more content with half the team. The ROI has been incredible - we saved over ₹2,00,000 in the first quarter alone.",
+    content:
+      "InQuo.site transformed our content workflow completely. We now produce 5x more content with half the team. The ROI has been incredible — we saved over ₹2,00,000 in the first quarter alone.",
     rating: 5,
     industry: "Technology",
-    result: "5x content output"
+    result: "5x content output",
+    metric: "5×",
   },
   {
     id: "2",
@@ -35,10 +35,12 @@ const testimonials: Testimonial[] = [
     role: "Marketing Head",
     company: "E-commerce Co.",
     avatar: "PP",
-    content: "The AI tools for ad copy and social media posts have cut our campaign creation time from days to just hours. Our conversion rates improved by 40% with AI-optimized content.",
+    content:
+      "The AI tools for ad copy and social media posts cut our campaign creation time from days to hours. Our conversion rates improved by 40% with AI-optimized content.",
     rating: 5,
     industry: "E-commerce",
-    result: "40% higher conversions"
+    result: "40% higher conversions",
+    metric: "+40%",
   },
   {
     id: "3",
@@ -46,10 +48,12 @@ const testimonials: Testimonial[] = [
     role: "Freelance Developer",
     company: "Self-employed",
     avatar: "AV",
-    content: "Code Generator and Bug Fixer are absolute game changers. I complete projects 3x faster now and my clients are amazed at the turnaround time. Worth every rupee!",
+    content:
+      "Code Generator and Bug Fixer are absolute game changers. I complete projects 3x faster now and my clients are amazed at the turnaround time. Worth every rupee!",
     rating: 5,
     industry: "Freelancing",
-    result: "3x faster delivery"
+    result: "3x faster delivery",
+    metric: "3×",
   },
   {
     id: "4",
@@ -57,10 +61,12 @@ const testimonials: Testimonial[] = [
     role: "Content Manager",
     company: "Digital Agency",
     avatar: "SG",
-    content: "Managing content for 20+ clients was overwhelming until we discovered InQuo. Now our small team handles everything effortlessly. The blog generator alone saves us 15 hours weekly.",
+    content:
+      "Managing content for 20+ clients was overwhelming until we found InQuo. Our small team handles everything effortlessly now — the blog generator alone saves us 15 hours every week.",
     rating: 5,
     industry: "Digital Marketing",
-    result: "15 hrs/week saved"
+    result: "15 hrs/week saved",
+    metric: "15h",
   },
   {
     id: "5",
@@ -68,10 +74,12 @@ const testimonials: Testimonial[] = [
     role: "Founder",
     company: "SaaS Startup",
     avatar: "VS",
-    content: "From product descriptions to technical documentation, InQuo handles it all. We've reduced our content costs by 60% while maintaining excellent quality. Highly recommended!",
+    content:
+      "From product descriptions to technical documentation, InQuo handles it all. We've cut content costs by 60% while keeping excellent quality. Highly recommended.",
     rating: 5,
     industry: "SaaS",
-    result: "60% cost reduction"
+    result: "60% cost reduction",
+    metric: "−60%",
   },
   {
     id: "6",
@@ -79,10 +87,12 @@ const testimonials: Testimonial[] = [
     role: "Creative Director",
     company: "Design Studio",
     avatar: "AR",
-    content: "The Image AI tools are phenomenal. We create stunning visuals in minutes that would take hours in Photoshop. Our clients can't believe the speed and quality.",
+    content:
+      "The Image AI tools are phenomenal. We create stunning visuals in minutes that would take hours in Photoshop. Our clients can't believe the speed and quality.",
     rating: 5,
     industry: "Design",
-    result: "10x faster designs"
+    result: "10x faster designs",
+    metric: "10×",
   },
   {
     id: "7",
@@ -90,160 +100,236 @@ const testimonials: Testimonial[] = [
     role: "SEO Specialist",
     company: "Growth Agency",
     avatar: "KM",
-    content: "InQuo's SEO content tools helped us rank 50+ keywords on page 1 for our clients. The meta description and blog optimization features are incredibly powerful.",
+    content:
+      "InQuo's SEO content tools helped us rank 50+ keywords on page 1 for our clients. The meta-description and blog optimization features are incredibly powerful.",
     rating: 5,
     industry: "SEO",
-    result: "50+ #1 rankings"
+    result: "50+ #1 rankings",
+    metric: "50+",
   },
-  {
-    id: "8",
-    name: "Neha Kapoor",
-    role: "Operations Lead",
-    company: "Retail Chain",
-    avatar: "NK",
-    content: "We use InQuo for everything from customer emails to training materials. It's become indispensable for our team of 50+. The consistency in our communications improved dramatically.",
-    rating: 5,
-    industry: "Retail",
-    result: "Team of 50+ users"
-  }
 ];
 
 export function TestimonialsCarousel() {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ 
-    loop: true,
-    align: "start",
-    slidesToScroll: 1,
-    breakpoints: {
-      '(min-width: 768px)': { slidesToScroll: 2 },
-      '(min-width: 1024px)': { slidesToScroll: 3 }
-    }
-  });
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+  const [active, setActive] = useState(0);
+  const current = testimonials[active];
 
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
-  const scrollTo = useCallback((index: number) => emblaApi && emblaApi.scrollTo(index), [emblaApi]);
-
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    setSelectedIndex(emblaApi.selectedScrollSnap());
-  }, [emblaApi]);
-
+  // Auto-rotate spotlight
   useEffect(() => {
-    if (!emblaApi) return;
-    setScrollSnaps(emblaApi.scrollSnapList());
-    emblaApi.on("select", onSelect);
-    onSelect();
-  }, [emblaApi, onSelect]);
-
-  // Auto-scroll
-  useEffect(() => {
-    if (!emblaApi) return;
-    const interval = setInterval(() => {
-      emblaApi.scrollNext();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [emblaApi]);
+    const id = setInterval(() => {
+      setActive((i) => (i + 1) % testimonials.length);
+    }, 6000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
-    <section className="py-24 px-4 bg-muted/30" aria-labelledby="testimonials-heading">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <Badge className="mb-4 px-4 py-1">Customer Stories</Badge>
-          <h2 id="testimonials-heading" className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-            Real Results from <span className="text-gradient">Real Businesses</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Join 10,000+ businesses across India already transforming their workflow with InQuo.site
+    <section
+      className="relative py-24 px-4 overflow-hidden bg-background"
+      aria-labelledby="testimonials-heading"
+    >
+      {/* Decorative grid + diagonal accent */}
+      <div className="absolute inset-0 ns-grain opacity-[0.4] pointer-events-none" aria-hidden="true" />
+      <div
+        className="absolute -top-40 -right-32 w-[36rem] h-[36rem] rounded-full bg-primary/10 blur-3xl pointer-events-none"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute -bottom-40 -left-32 w-[30rem] h-[30rem] rounded-full bg-accent/10 blur-3xl pointer-events-none"
+        aria-hidden="true"
+      />
+
+      <div className="relative max-w-7xl mx-auto">
+        {/* Header — editorial */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
+          <div>
+            <div className="text-xs font-display tracking-[0.3em] uppercase text-muted-foreground mb-4">
+              <span className="text-primary">/</span> Customer stories
+              <span className="text-primary"> /</span> 010
+            </div>
+            <h2
+              id="testimonials-heading"
+              className="font-display text-4xl sm:text-5xl lg:text-6xl tracking-tighter leading-[1.05]"
+            >
+              Real results from
+              <br />
+              <span className="italic font-script text-primary">real businesses.</span>
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground max-w-xs">
+            10,000+ teams across India ship faster with InQuo.site — read what they say in their own words.
           </p>
         </div>
 
-        <div className="relative">
-          {/* Carousel Navigation Buttons */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 hidden md:flex rounded-full shadow-lg bg-background"
-            onClick={scrollPrev}
-            aria-label="Previous testimonial"
+        {/* Main grid: spotlight + selector list */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+          {/* Spotlight quote */}
+          <article
+            key={current.id}
+            className="lg:col-span-7 relative animate-fade-in"
           >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 hidden md:flex rounded-full shadow-lg bg-background"
-            onClick={scrollNext}
-            aria-label="Next testimonial"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+            <div className="relative rounded-3xl border border-border bg-card/60 backdrop-blur-md p-8 sm:p-12 overflow-hidden group">
+              {/* Diagonal slash accents */}
+              <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-primary/20 to-transparent blur-2xl" />
+              <Quote className="absolute -top-2 -left-2 w-32 h-32 text-primary/5" strokeWidth={1} />
 
-          {/* Carousel */}
-          <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex gap-6">
-              {testimonials.map((testimonial) => (
-                <div
-                  key={testimonial.id}
-                  className="flex-none w-full md:w-1/2 lg:w-1/3"
-                >
-                  <Card className="p-6 h-full border-2 hover:border-accent/30 hover:shadow-xl transition-all duration-300 flex flex-col">
-                    {/* Quote Icon */}
-                    <Quote className="w-8 h-8 text-accent/30 mb-4" />
-                    
-                    {/* Rating */}
-                    <div className="flex items-center gap-1 mb-3">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                      ))}
-                    </div>
-
-                    {/* Content */}
-                    <p className="text-foreground mb-4 flex-grow text-sm leading-relaxed">
-                      "{testimonial.content}"
-                    </p>
-
-                    {/* Result Badge */}
-                    <Badge variant="secondary" className="w-fit mb-4 text-xs">
-                      📈 {testimonial.result}
-                    </Badge>
-
-                    {/* Author */}
-                    <div className="flex items-center gap-3 pt-4 border-t border-border">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xs font-bold text-primary-foreground">
-                        {testimonial.avatar}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">{testimonial.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {testimonial.role}, {testimonial.company}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
+              {/* Massive metric */}
+              <div className="flex items-start justify-between gap-6 mb-8">
+                <div className="flex items-center gap-1">
+                  {[...Array(current.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-primary text-primary" />
+                  ))}
+                  <span className="ml-3 text-xs font-mono text-muted-foreground">
+                    {current.industry}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="text-right">
+                  <div className="font-display text-5xl sm:text-7xl tracking-tighter leading-none text-primary">
+                    {current.metric}
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground mt-2 font-display">
+                    {current.result}
+                  </div>
+                </div>
+              </div>
 
-          {/* Dots Navigation */}
-          <div className="flex justify-center gap-2 mt-8">
-            {scrollSnaps.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => scrollTo(index)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  index === selectedIndex 
-                    ? "bg-accent w-6" 
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
+              {/* Big quote */}
+              <blockquote className="font-display text-2xl sm:text-3xl lg:text-4xl leading-snug tracking-tight text-foreground mb-10">
+                <span className="text-primary mr-1">“</span>
+                {current.content}
+                <span className="text-primary ml-1">”</span>
+              </blockquote>
+
+              {/* Author */}
+              <footer className="flex items-center gap-4 pt-6 border-t border-border/60">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-bold text-primary-foreground shadow-lg">
+                  {current.avatar}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-display text-base">{current.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {current.role} <span className="text-primary">/</span> {current.company}
+                  </p>
+                </div>
+                <div className="text-xs font-mono text-muted-foreground">
+                  {String(active + 1).padStart(2, "0")}
+                  <span className="text-primary mx-1">/</span>
+                  {String(testimonials.length).padStart(2, "0")}
+                </div>
+              </footer>
+            </div>
+          </article>
+
+          {/* Selector list */}
+          <aside className="lg:col-span-5">
+            <div className="text-xs font-display tracking-[0.3em] uppercase text-muted-foreground mb-4">
+              <span className="text-primary">/</span> Browse stories
+            </div>
+            <ul className="space-y-1">
+              {testimonials.map((t, i) => {
+                const isActive = i === active;
+                return (
+                  <li key={t.id}>
+                    <button
+                      onClick={() => setActive(i)}
+                      className={cn(
+                        "w-full text-left group flex items-center gap-4 py-3 px-4 rounded-xl border transition-all duration-300",
+                        isActive
+                          ? "border-primary/60 bg-primary/5"
+                          : "border-transparent hover:border-border hover:bg-card/40"
+                      )}
+                      aria-pressed={isActive}
+                    >
+                      <span
+                        className={cn(
+                          "text-xs font-mono w-7 shrink-0 transition-colors",
+                          isActive ? "text-primary" : "text-muted-foreground/60"
+                        )}
+                      >
+                        0{i + 1}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span
+                            className={cn(
+                              "font-display text-base tracking-tight transition-colors",
+                              isActive ? "text-foreground" : "text-foreground/80 group-hover:text-foreground"
+                            )}
+                          >
+                            {t.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate">
+                            <span className="text-primary mx-1">/</span>
+                            {t.company}
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground italic font-script truncate">
+                          “{t.content.split(".")[0]}.”
+                        </div>
+                      </div>
+                      <span
+                        className={cn(
+                          "shrink-0 font-display text-sm tracking-tight transition-all",
+                          isActive ? "text-primary" : "text-muted-foreground/40 group-hover:text-primary"
+                        )}
+                      >
+                        {t.metric}
+                      </span>
+                      <ArrowUpRight
+                        className={cn(
+                          "w-4 h-4 shrink-0 transition-all",
+                          isActive
+                            ? "opacity-100 text-primary translate-x-0"
+                            : "opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* Auto-progress bar */}
+            <div className="mt-6 h-px bg-border relative overflow-hidden">
+              <div
+                key={active}
+                className="absolute inset-y-0 left-0 bg-primary"
+                style={{ animation: "ns-progress 6s linear forwards" }}
               />
+            </div>
+          </aside>
+        </div>
+
+        {/* Scrolling marquee strip of micro-quotes */}
+        <div className="mt-16 border-y border-border/60 py-5 overflow-hidden">
+          <div className="flex gap-12 animate-[ns-marquee_40s_linear_infinite] whitespace-nowrap">
+            {[...testimonials, ...testimonials].map((t, i) => (
+              <div
+                key={`${t.id}-${i}`}
+                className="flex items-center gap-3 text-sm shrink-0"
+              >
+                <span className="font-display text-primary">{t.metric}</span>
+                <span className="text-muted-foreground italic font-script">
+                  {t.result}
+                </span>
+                <span className="text-xs text-muted-foreground/60 font-mono">
+                  — {t.name}, {t.company}
+                </span>
+                <span className="text-primary text-lg ml-6">/</span>
+              </div>
             ))}
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes ns-progress {
+          from { width: 0%; }
+          to   { width: 100%; }
+        }
+        @keyframes ns-marquee {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+      `}</style>
     </section>
   );
 }
