@@ -166,7 +166,21 @@ serve(async (req) => {
       }
     }
 
-    const systemPrompt = customSystemPrompt || TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
+    let systemPrompt = customSystemPrompt || TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
+
+    // For agent-chat, always load the system prompt server-side from the database
+    // (clients no longer have column-level access to system_prompt).
+    if (toolType === 'agent-chat' && agentId) {
+      const { data: agentRow } = await adminClient
+        .from('ai_agents')
+        .select('system_prompt')
+        .eq('id', agentId)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (agentRow?.system_prompt) {
+        systemPrompt = agentRow.system_prompt;
+      }
+    }
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
