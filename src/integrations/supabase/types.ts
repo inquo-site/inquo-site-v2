@@ -47,13 +47,6 @@ export type Database = {
             referencedRelation: "ai_agents"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "agent_conversations_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "ai_agents_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       agent_memory: {
@@ -90,13 +83,6 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agent_memory_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "ai_agents_public"
             referencedColumns: ["id"]
           },
         ]
@@ -173,13 +159,6 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agent_subscriptions_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "ai_agents_public"
             referencedColumns: ["id"]
           },
         ]
@@ -373,13 +352,6 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "ai_agents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_requests_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "ai_agents_public"
             referencedColumns: ["id"]
           },
         ]
@@ -602,63 +574,7 @@ export type Database = {
       }
     }
     Views: {
-      ai_agents_public: {
-        Row: {
-          category: string | null
-          created_at: string | null
-          description: string | null
-          display_order: number | null
-          icon: string | null
-          id: string | null
-          is_active: boolean | null
-          is_premium: boolean | null
-          monthly_price: number | null
-          name: string | null
-          one_time_price: number | null
-          updated_at: string | null
-          usd_monthly_price: number | null
-          usd_one_time_price: number | null
-          usd_yearly_price: number | null
-          yearly_price: number | null
-        }
-        Insert: {
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          display_order?: number | null
-          icon?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          is_premium?: boolean | null
-          monthly_price?: number | null
-          name?: string | null
-          one_time_price?: number | null
-          updated_at?: string | null
-          usd_monthly_price?: number | null
-          usd_one_time_price?: number | null
-          usd_yearly_price?: number | null
-          yearly_price?: number | null
-        }
-        Update: {
-          category?: string | null
-          created_at?: string | null
-          description?: string | null
-          display_order?: number | null
-          icon?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          is_premium?: boolean | null
-          monthly_price?: number | null
-          name?: string | null
-          one_time_price?: number | null
-          updated_at?: string | null
-          usd_monthly_price?: number | null
-          usd_one_time_price?: number | null
-          usd_yearly_price?: number | null
-          yearly_price?: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       can_access_tool: {
