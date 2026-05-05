@@ -109,7 +109,17 @@ const Pricing = () => {
     { icon: Sparkles, label: "Image Gen", cost: "5–10 tokens", note: "Per image (size & model dependent)" },
   ];
 
-  const faqs = [
+  const includedFeatures = [
+    { icon: Wrench, title: "160+ AI Tools", desc: "Grammar fixer, summarizer, ad copy, blog generator, code helper & more — all unlocked." },
+    { icon: Bot, title: "All AI Agents", desc: "Use every autonomous agent — research, writing, marketing, coding — nothing locked." },
+    { icon: ImageIcon, title: "AI Image Generation", desc: "Generate images with your tokens. No daily caps, no watermarks." },
+    { icon: MessageSquare, title: "Multi-Model Chat", desc: "Chat with Gemini, ChatGPT, and DeepSeek — switch any time." },
+    { icon: FileText, title: "File & Link Analysis", desc: "Upload documents up to 10MB or paste any link — agents read & understand." },
+    { icon: Code2, title: "Code & Dev Tools", desc: "Code generator, debugger, explainer — speed up your dev workflow." },
+    { icon: InfinityIcon, title: "Tokens Never Expire", desc: "Purchased tokens stay in your wallet forever — use them whenever." },
+    { icon: Shield, title: "Private & Secure", desc: "Your data is encrypted. We never train models on your prompts." },
+    { icon: Headphones, title: "Priority Support", desc: "Email support with quick response — token buyers get priority." },
+  ];
     {
       q: "How does the token system work?",
       a: `Buy any number of tokens you need. Tools cost 1–2 tokens per use, agents cost 5–15 tokens per task. Tokens never expire on paid packs.`,
