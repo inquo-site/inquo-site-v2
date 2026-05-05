@@ -10,7 +10,7 @@ import { EmailPopup } from "@/components/EmailPopup";
 import { SEOHead } from "@/components/SEOHead";
 import { TestimonialsCarousel } from "@/components/TestimonialsCarousel";
 import { ValueProposition } from "@/components/ValueProposition";
-import { ReviewsSection } from "@/components/ReviewsSection";
+
 import { InternalLinking } from "@/components/InternalLinking";
 import { useABTest } from "@/hooks/useABTesting";
 import { NSCta } from "@/components/ns/NSCta";
