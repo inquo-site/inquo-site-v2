@@ -510,9 +510,6 @@ export default function NewLanding() {
       {/* Value Proposition */}
       <ValueProposition />
       
-      {/* Reviews Section */}
-      <ReviewsSection />
-
       {/* Referral Section */}
       <section className="relative py-28 px-4 overflow-hidden">
         <NSBackdrop intensity="subtle" />
