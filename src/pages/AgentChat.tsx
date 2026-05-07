@@ -540,13 +540,13 @@ const AgentChat = () => {
       const requestBody = {
         prompt: userMessage || "Analyze the attached files and provide detailed insights based on the content.",
         toolType: "agent-chat",
-        // systemPrompt is loaded server-side from the agent record (not exposed to clients)
         messages: messageHistory,
         files: filesPayload.length > 0 ? filesPayload : undefined,
         stream: true,
         agentId: agentId,
         webSearch: webSearchEnabled,
         selectedModel: selectedModel,
+        enableTools: true,
       };
 
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tool`;
@@ -573,6 +573,7 @@ const AgentChat = () => {
       const decoder = new TextDecoder();
       let textBuffer = "";
       let assistantSoFar = "";
+      let toolCallsAcc: ToolCallEvent[] = [];
       let streamDone = false;
 
       const assistantMsgId = `temp-${Date.now()}-assistant`;
@@ -581,7 +582,15 @@ const AgentChat = () => {
         role: "assistant" as const,
         content: "",
         created_at: new Date().toISOString(),
+        toolCalls: [],
       }]);
+
+      const updateAssistant = () => {
+        const displayContent = assistantSoFar.replace(/<MEMORY>[\s\S]*?<\/MEMORY>/g, '').trim();
+        setMessages(prev =>
+          prev.map(m => m.id === assistantMsgId ? { ...m, content: displayContent, toolCalls: [...toolCallsAcc] } : m)
+        );
+      };
 
       while (!streamDone) {
         const { done, value } = await reader.read();
@@ -598,21 +607,33 @@ const AgentChat = () => {
           if (!line.startsWith("data: ")) continue;
 
           const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") {
-            streamDone = true;
-            break;
-          }
+          if (jsonStr === "[DONE]") { streamDone = true; break; }
 
           try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantSoFar += content;
-              // Show content without memory block in real-time
-              const displayContent = assistantSoFar.replace(/<MEMORY>[\s\S]*?<\/MEMORY>/g, '').trim();
-              setMessages(prev =>
-                prev.map(m => m.id === assistantMsgId ? { ...m, content: displayContent } : m)
+            const evt = JSON.parse(jsonStr);
+            if (evt.error) {
+              toast.error(evt.error);
+              continue;
+            }
+            if (evt.type === "content" && evt.delta) {
+              assistantSoFar += evt.delta;
+              updateAssistant();
+            } else if (evt.type === "tool_call_start") {
+              toolCallsAcc.push({
+                id: evt.id,
+                name: evt.name,
+                arguments: evt.arguments,
+                status: "running",
+              });
+              updateAssistant();
+            } else if (evt.type === "tool_call_end") {
+              toolCallsAcc = toolCallsAcc.map(tc =>
+                tc.id === evt.id ? { ...tc, status: "done", result: evt.result } : tc
               );
+              updateAssistant();
+            } else if (evt.type === "done") {
+              streamDone = true;
+              break;
             }
           } catch {
             textBuffer = line + "\n" + textBuffer;
@@ -621,29 +642,10 @@ const AgentChat = () => {
         }
       }
 
-      // Final flush
-      if (textBuffer.trim()) {
-        for (let raw of textBuffer.split("\n")) {
-          if (!raw) continue;
-          if (raw.endsWith("\r")) raw = raw.slice(0, -1);
-          if (raw.startsWith(":") || raw.trim() === "") continue;
-          if (!raw.startsWith("data: ")) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantSoFar += content;
-            }
-          } catch { /* ignore */ }
-        }
-      }
-
       // Extract memory and clean response
       const cleanedContent = await extractAndSaveMemory(assistantSoFar);
       setMessages(prev =>
-        prev.map(m => m.id === assistantMsgId ? { ...m, content: cleanedContent } : m)
+        prev.map(m => m.id === assistantMsgId ? { ...m, content: cleanedContent, toolCalls: [...toolCallsAcc] } : m)
       );
 
       if (convId) await saveMessage(convId, "assistant", cleanedContent);
