@@ -11,7 +11,6 @@ const corsHeaders = {
 const FREE_TOOLS = ['blog', 'code', 'grammar', 'adcopy', 'summarize', 'chat', 'notes', 'essay', 'email', 'social', 'product', 'story', 'hashtags', 'paraphrase', 'copywriting', 'agent-chat'];
 
 const TOOL_PROMPTS: Record<string, string> = {
-  // Free tools
   blog: "You are an expert blog writer. Create a well-structured, engaging blog post based on the user's topic. Include an introduction, main points with explanations, and a conclusion. Make it SEO-friendly and easy to read.",
   code: "You are an expert programmer. Generate clean, well-commented, functional code based on the user's requirements. Include explanations for complex parts. Follow best practices and coding standards.",
   grammar: "You are a grammar expert. Carefully review the text for grammar, spelling, punctuation, and style errors. Provide the corrected version with improvements. Be thorough but preserve the original meaning and tone.",
@@ -42,6 +41,110 @@ const TOOL_PROMPTS: Record<string, string> = {
   strategy: "You are a marketing strategy expert. Develop comprehensive marketing strategies with clear goals, target audience analysis, channel recommendations, and actionable tactics.",
 };
 
+// ============================================================
+// AGENT TOOLS (Function Calling) — web_search, calculator, current_datetime
+// ============================================================
+const AGENT_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "web_search",
+      description: "Search the live internet for up-to-date information, news, facts, prices, statistics or anything outside your training data. Use this whenever the user asks about current events, recent data, or anything you might not know.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The search query to look up on the web" },
+        },
+        required: ["query"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "calculator",
+      description: "Evaluate a mathematical expression. Supports +, -, *, /, %, **, parentheses, and Math functions like sqrt, pow, sin, cos. Use for any precise arithmetic.",
+      parameters: {
+        type: "object",
+        properties: {
+          expression: { type: "string", description: "Math expression, e.g. '(2500 * 0.18) + 200' or 'Math.sqrt(144)'" },
+        },
+        required: ["expression"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "current_datetime",
+      description: "Get the current date and time in a given IANA timezone (default UTC). Use for any 'today', 'now', 'current time' style questions.",
+      parameters: {
+        type: "object",
+        properties: {
+          timezone: { type: "string", description: "IANA tz like 'Asia/Kolkata' or 'UTC'", default: "UTC" },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+];
+
+// Run a tool and return a string result
+async function runTool(name: string, args: any): Promise<string> {
+  try {
+    if (name === "calculator") {
+      const expr = String(args?.expression ?? "");
+      // Allow only safe characters & Math.*
+      if (!/^[\d+\-*/().,\s%a-zA-Z_]+$/.test(expr)) return "Error: invalid characters in expression";
+      // eslint-disable-next-line no-new-func
+      const fn = new Function("Math", `"use strict"; return (${expr});`);
+      const value = fn(Math);
+      return `Result: ${value}`;
+    }
+    if (name === "current_datetime") {
+      const tz = args?.timezone || "UTC";
+      const now = new Date();
+      const formatted = new Intl.DateTimeFormat("en-US", {
+        dateStyle: "full",
+        timeStyle: "long",
+        timeZone: tz,
+      }).format(now);
+      return `Current datetime in ${tz}: ${formatted} (ISO: ${now.toISOString()})`;
+    }
+    if (name === "web_search") {
+      const q = String(args?.query ?? "").trim();
+      if (!q) return "Error: empty query";
+      // DuckDuckGo HTML endpoint — no API key, public
+      const res = await fetch(`https://duckduckgo.com/html/?q=${encodeURIComponent(q)}`, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; LovableAgent/1.0)" },
+      });
+      if (!res.ok) return `Web search failed with status ${res.status}`;
+      const html = await res.text();
+      // Extract top 5 results (title + url + snippet)
+      const results: { title: string; url: string; snippet: string }[] = [];
+      const blockRe = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
+      let m: RegExpExecArray | null;
+      while ((m = blockRe.exec(html)) && results.length < 5) {
+        const stripTags = (s: string) => s.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").trim();
+        let url = m[1];
+        try {
+          const u = new URL(url, "https://duckduckgo.com");
+          const real = u.searchParams.get("uddg");
+          if (real) url = decodeURIComponent(real);
+        } catch { /* ignore */ }
+        results.push({ title: stripTags(m[2]), url, snippet: stripTags(m[3]) });
+      }
+      if (results.length === 0) return `No web results found for "${q}".`;
+      return results.map((r, i) => `${i + 1}. ${r.title}\n   ${r.url}\n   ${r.snippet}`).join("\n\n");
+    }
+    return `Unknown tool: ${name}`;
+  } catch (e) {
+    return `Tool error: ${e instanceof Error ? e.message : String(e)}`;
+  }
+}
+
 // Helper: Load agent memory
 async function loadMemory(adminClient: any, userId: string, agentId: string): Promise<string> {
   try {
@@ -52,9 +155,7 @@ async function loadMemory(adminClient: any, userId: string, agentId: string): Pr
       .eq('agent_id', agentId)
       .order('updated_at', { ascending: false })
       .limit(50);
-    
     if (error || !data || data.length === 0) return '';
-    
     const memoryStr = data.map((m: any) => `- ${m.key}: ${m.value}`).join('\n');
     return `\n\n📝 USER MEMORY (things you remember about this user from past conversations):\n${memoryStr}`;
   } catch (e) {
@@ -63,7 +164,6 @@ async function loadMemory(adminClient: any, userId: string, agentId: string): Pr
   }
 }
 
-// Helper: Save memory items extracted by AI
 async function saveMemory(adminClient: any, userId: string, agentId: string, memories: Array<{key: string, value: string}>) {
   try {
     for (const mem of memories) {
@@ -74,7 +174,6 @@ async function saveMemory(adminClient: any, userId: string, agentId: string, mem
           { onConflict: 'user_id,agent_id,key' }
         );
     }
-    console.log(`Saved ${memories.length} memory items for user ${userId}`);
   } catch (e) {
     console.error('Error saving memory:', e);
   }
@@ -86,20 +185,13 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory, stream: requestStream, agentId, webSearch, selectedModel } = await req.json();
+    const { prompt, toolType, files, systemPrompt: customSystemPrompt, messages: conversationHistory, stream: requestStream, agentId, webSearch, selectedModel, enableTools } = await req.json();
 
     if (!prompt && (!files || files.length === 0)) {
-      return new Response(
-        JSON.stringify({ error: 'Missing prompt or files' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Missing prompt or files' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-
     if (!toolType) {
-      return new Response(
-        JSON.stringify({ error: 'Missing toolType' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Missing toolType' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -111,65 +203,40 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization');
     let user = null;
-
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '');
-      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: `Bearer ${token}` } }
-      });
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: `Bearer ${token}` } } });
       const { data: { user: authUser }, error: authError } = await userClient.auth.getUser(token);
-      if (!authError && authUser) {
-        user = authUser;
-        console.log(`User authenticated: ${user.id}`);
-      }
+      if (!authError && authUser) user = authUser;
     }
 
-    const { data: tool, error: toolError } = await adminClient
+    const { data: tool } = await adminClient
       .from('tools')
       .select('id, is_premium, credits_cost, is_free_tool')
       .eq('tool_type', toolType)
       .limit(1)
       .maybeSingle();
 
-    if (toolError) console.log('Tool fetch error:', toolError.message);
-
     const toolIsFree = isFreeTool || tool?.is_free_tool === true || tool?.is_premium === false;
-
     if (!toolIsFree && !user) {
-      return new Response(
-        JSON.stringify({ error: 'Login required for premium tools' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Login required for premium tools' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const creditsCost = tool?.credits_cost || 2;
-
     if (tool?.is_premium && user) {
-      const { data: hasAccess, error: accessError } = await adminClient
-        .rpc('can_access_tool', { _user_id: user.id, _tool_id: tool.id });
-      if (accessError || !hasAccess) {
-        return new Response(
-          JSON.stringify({ error: 'Premium subscription required' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      const { data: hasAccess } = await adminClient.rpc('can_access_tool', { _user_id: user.id, _tool_id: tool.id });
+      if (!hasAccess) {
+        return new Response(JSON.stringify({ error: 'Premium subscription required' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     }
-
     if (user) {
-      const { data: creditsDeducted, error: creditsError } = await adminClient
-        .rpc('deduct_credits', { _user_id: user.id, _amount: creditsCost });
-      if (creditsError || !creditsDeducted) {
-        return new Response(
-          JSON.stringify({ error: 'Insufficient credits. Please upgrade your plan.' }),
-          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+      const { data: creditsDeducted } = await adminClient.rpc('deduct_credits', { _user_id: user.id, _amount: creditsCost });
+      if (!creditsDeducted) {
+        return new Response(JSON.stringify({ error: 'Insufficient credits. Please upgrade your plan.' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
     }
 
     let systemPrompt = customSystemPrompt || TOOL_PROMPTS[toolType] || TOOL_PROMPTS.chat;
-
-    // For agent-chat, always load the system prompt server-side from the database
-    // (clients no longer have column-level access to system_prompt).
     if (toolType === 'agent-chat' && agentId) {
       const { data: agentRow } = await adminClient
         .from('ai_agents')
@@ -177,22 +244,14 @@ serve(async (req) => {
         .eq('id', agentId)
         .eq('is_active', true)
         .maybeSingle();
-      if (agentRow?.system_prompt) {
-        systemPrompt = agentRow.system_prompt;
-      }
+      if (agentRow?.system_prompt) systemPrompt = agentRow.system_prompt;
     }
-    
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('AI service is not configured');
-    }
+    if (!LOVABLE_API_KEY) throw new Error('AI service is not configured');
 
-    // Check if we have image files
     const hasImages = files && files.length > 0 && files.some((f: any) => f.type?.startsWith('image/'));
-
-    // Build user content
     let userContent: any;
-
     if (hasImages) {
       userContent = [];
       userContent.push({ type: 'text', text: prompt || 'Analyze this image and describe what you see in detail.' });
@@ -203,8 +262,7 @@ serve(async (req) => {
       }
       const nonImageFiles = files.filter((f: any) => !f.type?.startsWith('image/'));
       if (nonImageFiles.length > 0) {
-        const fileList = nonImageFiles.map((f: any) => f.name).join(', ');
-        userContent.push({ type: 'text', text: `\n\nAdditional files attached: ${fileList}` });
+        userContent.push({ type: 'text', text: `\n\nAdditional files attached: ${nonImageFiles.map((f: any) => f.name).join(', ')}` });
       }
     } else if (files && files.length > 0) {
       let fileContext = '';
@@ -212,10 +270,9 @@ serve(async (req) => {
         if (file.data) {
           if (file.type?.includes('text') || file.type?.includes('json') || file.type?.includes('csv')) {
             try {
-              const base64Content = file.data.split(',')[1];
-              const decodedContent = atob(base64Content);
+              const decodedContent = atob(file.data.split(',')[1]);
               fileContext += `\n\n--- Content from ${file.name} ---\n${decodedContent}`;
-            } catch (e) {
+            } catch {
               fileContext += `\n\n[File attached: ${file.name}]`;
             }
           } else {
@@ -228,187 +285,201 @@ serve(async (req) => {
       userContent = prompt;
     }
 
-    // Build enhanced system prompt
     let enhancedSystemPrompt = systemPrompt;
-
     if (toolType === 'agent-chat') {
-      // Load user memory for this agent
       let memoryContext = '';
-      if (user && agentId) {
-        memoryContext = await loadMemory(adminClient, user.id, agentId);
-      }
+      if (user && agentId) memoryContext = await loadMemory(adminClient, user.id, agentId);
 
       enhancedSystemPrompt = `${systemPrompt}
 
-IMPORTANT WORKING GUIDELINES:
-- You are a real professional expert, NOT just a text generator. Act like a senior human professional in your field.
-- When files, images, documents, or links are provided, analyze them THOROUGHLY and base your work on the actual content — don't give generic responses.
-- For images: describe what you see, identify key elements, extract text/data, and use it in your deliverable.
-- For documents/PDFs: read the content carefully, understand the context, and reference specific details in your output.
-- For data files (CSV, Excel, JSON): analyze the data, identify patterns, trends, and provide data-driven insights.
-- For links: acknowledge the reference and incorporate relevant context.
-- Always provide ACTIONABLE, SPECIFIC, DETAILED deliverables — not vague advice.
-- Use real-world best practices, frameworks, and proven methodologies.
-- Structure your output professionally with clear sections, headings, and formatting.
-- If you need more information, ask specific questions instead of making assumptions.
-- Think step-by-step like a human expert would when solving complex problems.
+You are a real professional expert. Be specific, actionable, and structured.
 
-🧠 MEMORY SYSTEM:
-- You have persistent memory. You can remember facts about the user across conversations.
-- At the END of your response, if you learned important facts about the user (their name, company, industry, preferences, goals, projects, etc.), output a memory block like this:
+🧰 TOOLS AVAILABLE (function calling):
+- web_search(query): Search the live internet for fresh facts, news, prices.
+- calculator(expression): Evaluate any math precisely.
+- current_datetime(timezone): Get the current date/time.
+USE these tools whenever they would improve accuracy. Don't hallucinate facts you can look up.
+
+🧠 MEMORY:
+At the END of your final reply, if you learned facts about the user, output:
 <MEMORY>
-key1: value1
-key2: value2
+key: value
 </MEMORY>
-- Only store genuinely useful facts. Examples: "user_name: Rahul", "company: TechStartup Inc", "industry: SaaS", "preferred_tone: formal", "current_project: AI chatbot for customer support"
-- If no new facts were learned, don't output any memory block.
-${memoryContext}
-
-🔍 RESEARCH & ANALYSIS CAPABILITIES:
-- When the user asks you to research something, provide comprehensive analysis based on your training knowledge.
-- Structure research outputs with clear sections: Overview, Key Findings, Analysis, Recommendations.
-- Cite specific facts, statistics, and frameworks when available.
-- If asked to compare options, create structured comparison tables.
-- For market research, include industry trends, competitor analysis, and strategic insights.
-
-📄 DOCUMENT ANALYSIS:
-- When documents are shared, provide thorough summaries with key takeaways.
-- Extract action items, important dates, names, and data points.
-- Offer insights and recommendations based on document content.
-- Cross-reference multiple documents when available.
-
-🛠️ TOOL-LIKE CAPABILITIES:
-- You can generate tables, charts (in text/markdown), calculations, and structured data.
-- You can create templates, frameworks, checklists, and action plans.
-- You can draft emails, proposals, contracts, and other business documents.
-- You can analyze data and provide statistical insights.
-- You can create step-by-step guides and SOPs.`;
+${memoryContext}`;
     }
-
-    if (hasImages) {
-      enhancedSystemPrompt += `\n\nYou have been provided with one or more images. Analyze them carefully and incorporate your observations into your response.`;
-    }
+    if (hasImages) enhancedSystemPrompt += `\n\nImages have been provided — analyze them carefully.`;
 
     let messagesArray: any[] = [{ role: 'system', content: enhancedSystemPrompt }];
-    
     if (conversationHistory && Array.isArray(conversationHistory)) {
-      for (const msg of conversationHistory) {
-        messagesArray.push({ role: msg.role, content: msg.content });
-      }
+      for (const msg of conversationHistory) messagesArray.push({ role: msg.role, content: msg.content });
     }
-    
     messagesArray.push({ role: 'user', content: userContent });
 
     const useStreaming = requestStream === true && toolType === 'agent-chat';
+    const useTools = enableTools === true && toolType === 'agent-chat' && !hasImages;
 
-    // Model selection: user can pick gemini, deepseek, or chatgpt
     const MODEL_MAP: Record<string, string> = {
       'gemini': 'google/gemini-2.5-flash',
       'deepseek': 'deepseek-chat',
       'chatgpt': 'openai/gpt-5-mini',
     };
-
     const isDeepSeek = selectedModel === 'deepseek';
     const model = MODEL_MAP[selectedModel] || 'google/gemini-2.5-flash';
 
-    const requestBody: any = {
-      model,
-      messages: messagesArray,
-      max_tokens: 4000,
-      stream: useStreaming,
-    };
-
-    // Add web search grounding for search requests
-    if (webSearch && toolType === 'agent-chat') {
-      if (typeof userContent === 'string') {
-        messagesArray[messagesArray.length - 1].content = `[WEB SEARCH MODE] Search the internet and provide up-to-date, factual information with sources for: ${userContent}`;
-      }
+    if (webSearch && toolType === 'agent-chat' && typeof userContent === 'string') {
+      messagesArray[messagesArray.length - 1].content = `[WEB SEARCH MODE] Search the internet and provide up-to-date, factual information with sources for: ${userContent}`;
     }
 
-    // Route to DeepSeek API or Lovable AI Gateway
-    let apiUrl: string;
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const apiUrl = isDeepSeek ? 'https://api.deepseek.com/chat/completions' : 'https://ai.gateway.lovable.dev/v1/chat/completions';
+    const apiKey = isDeepSeek ? Deno.env.get('DEEPSEEK_API_KEY') : LOVABLE_API_KEY;
+    if (!apiKey) throw new Error(`API key for ${isDeepSeek ? 'DeepSeek' : 'Lovable'} is not configured`);
+    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` };
 
-    if (isDeepSeek) {
-      const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
-      if (!DEEPSEEK_API_KEY) {
-        throw new Error('DeepSeek API key is not configured');
-      }
-      apiUrl = 'https://api.deepseek.com/chat/completions';
-      headers['Authorization'] = `Bearer ${DEEPSEEK_API_KEY}`;
-    } else {
-      apiUrl = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-      headers['Authorization'] = `Bearer ${LOVABLE_API_KEY}`;
+    // ============================================================
+    // STREAMING + TOOL CALLING PATH
+    // ============================================================
+    if (useStreaming) {
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          const send = (obj: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+          let fullText = "";
+          try {
+            const MAX_ITERATIONS = 5;
+            for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
+              const body: any = { model, messages: messagesArray, max_tokens: 4000, stream: true };
+              if (useTools) { body.tools = AGENT_TOOLS; body.tool_choice = "auto"; }
+
+              const resp = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(body) });
+              if (!resp.ok || !resp.body) {
+                const t = await resp.text().catch(() => "");
+                send({ error: `AI error ${resp.status}: ${t.slice(0, 200)}` });
+                break;
+              }
+
+              const reader = resp.body.getReader();
+              const decoder = new TextDecoder();
+              let buf = "";
+              let assistantText = "";
+              const toolCalls: any[] = []; // {id, name, arguments(string)}
+              let finishReason: string | null = null;
+
+              outer: while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buf += decoder.decode(value, { stream: true });
+                let nl: number;
+                while ((nl = buf.indexOf("\n")) !== -1) {
+                  let line = buf.slice(0, nl);
+                  buf = buf.slice(nl + 1);
+                  if (line.endsWith("\r")) line = line.slice(0, -1);
+                  if (!line.startsWith("data: ")) continue;
+                  const payload = line.slice(6).trim();
+                  if (payload === "[DONE]") break outer;
+                  try {
+                    const j = JSON.parse(payload);
+                    const delta = j.choices?.[0]?.delta;
+                    const fr = j.choices?.[0]?.finish_reason;
+                    if (fr) finishReason = fr;
+                    if (delta?.content) {
+                      assistantText += delta.content;
+                      send({ type: "content", delta: delta.content });
+                    }
+                    if (delta?.tool_calls) {
+                      for (const tc of delta.tool_calls) {
+                        const idx = tc.index ?? 0;
+                        if (!toolCalls[idx]) toolCalls[idx] = { id: tc.id || `call_${idx}`, name: "", arguments: "" };
+                        if (tc.id) toolCalls[idx].id = tc.id;
+                        if (tc.function?.name) toolCalls[idx].name += tc.function.name;
+                        if (tc.function?.arguments) toolCalls[idx].arguments += tc.function.arguments;
+                      }
+                    }
+                  } catch { /* partial */ }
+                }
+              }
+
+              fullText += assistantText;
+
+              // No tool calls → done
+              if (toolCalls.length === 0) break;
+
+              // Append assistant turn with tool_calls
+              messagesArray.push({
+                role: "assistant",
+                content: assistantText || null,
+                tool_calls: toolCalls.map(tc => ({
+                  id: tc.id,
+                  type: "function",
+                  function: { name: tc.name, arguments: tc.arguments || "{}" },
+                })),
+              });
+
+              // Execute each tool, emit chip events
+              for (const tc of toolCalls) {
+                let args: any = {};
+                try { args = JSON.parse(tc.arguments || "{}"); } catch { /* ignore */ }
+                send({ type: "tool_call_start", id: tc.id, name: tc.name, arguments: args });
+                const result = await runTool(tc.name, args);
+                send({ type: "tool_call_end", id: tc.id, name: tc.name, result: result.slice(0, 500) });
+                messagesArray.push({ role: "tool", tool_call_id: tc.id, content: result });
+              }
+              // Loop again so model can use the results
+            }
+
+            // Memory extraction
+            if (toolType === 'agent-chat' && user && agentId) {
+              const m = fullText.match(/<MEMORY>([\s\S]*?)<\/MEMORY>/);
+              if (m) {
+                const memories = m[1].trim().split('\n').filter(l => l.trim()).map(line => {
+                  const [key, ...v] = line.split(':');
+                  return { key: key.trim().replace(/^-\s*/, ''), value: v.join(':').trim() };
+                }).filter(x => x.key && x.value);
+                if (memories.length > 0) await saveMemory(adminClient, user.id, agentId, memories);
+              }
+            }
+
+            send({ type: "done" });
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          } catch (e) {
+            console.error("stream error:", e);
+            send({ error: e instanceof Error ? e.message : "stream failed" });
+          } finally {
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(stream, { headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' } });
     }
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody),
-    });
-
+    // Non-streaming path (legacy / non agent-chat)
+    const requestBody: any = { model, messages: messagesArray, max_tokens: 4000, stream: false };
+    const response = await fetch(apiUrl, { method: 'POST', headers, body: JSON.stringify(requestBody) });
     if (!response.ok) {
       const errorText = await response.text();
       console.error('AI API error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'AI credits exhausted. Please try again later.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      if (response.status === 429) return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (response.status === 402) return new Response(JSON.stringify({ error: 'AI credits exhausted. Please try again later.' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       throw new Error(`AI API error: ${response.status}`);
     }
-
-    // For streaming, we need to intercept to extract memory
-    if (useStreaming) {
-      console.log(`Streaming ${toolType} response...`);
-      
-      // We can't easily extract memory from streaming, so we pass it through
-      // Memory extraction will happen on the client side
-      return new Response(response.body, {
-        headers: { ...corsHeaders, 'Content-Type': 'text/event-stream' },
-      });
-    }
-
-    // Non-streaming response
     const data = await response.json();
     const result = data.choices?.[0]?.message?.content;
-
     if (!result) throw new Error('No content in AI response');
 
-    // Extract and save memory from non-streaming responses
     if (toolType === 'agent-chat' && user && agentId) {
       const memoryMatch = result.match(/<MEMORY>([\s\S]*?)<\/MEMORY>/);
       if (memoryMatch) {
-        const memoryLines = memoryMatch[1].trim().split('\n').filter((l: string) => l.trim());
-        const memories = memoryLines.map((line: string) => {
-          const [key, ...valueParts] = line.split(':');
-          return { key: key.trim(), value: valueParts.join(':').trim() };
+        const memories = memoryMatch[1].trim().split('\n').filter((l: string) => l.trim()).map((line: string) => {
+          const [key, ...v] = line.split(':');
+          return { key: key.trim(), value: v.join(':').trim() };
         }).filter((m: any) => m.key && m.value);
-        
-        if (memories.length > 0) {
-          await saveMemory(adminClient, user.id, agentId, memories);
-        }
+        if (memories.length > 0) await saveMemory(adminClient, user.id, agentId, memories);
       }
     }
 
-    return new Response(
-      JSON.stringify({ result }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-
+    return new Response(JSON.stringify({ result }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Error in ai-tool function:', error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
