@@ -1,0 +1,1 @@
+GRANT SELECT ON public.ai_agents TO anon, authenticated;
