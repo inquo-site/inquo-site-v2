@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
-import { Target, Eye, Users, Rocket, Heart, Zap } from "lucide-react";
+import { Target, Eye, Users, Rocket, Heart, Zap, Linkedin, Twitter, Mail, Sparkles } from "lucide-react";
 
 export default function ImprovedAbout() {
   const values = [
