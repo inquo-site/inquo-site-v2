@@ -49,12 +49,10 @@ const AGENT_TOOLS = [
     type: "function",
     function: {
       name: "web_search",
-      description: "Search the live internet for up-to-date information, news, facts, prices, statistics or anything outside your training data. Use this whenever the user asks about current events, recent data, or anything you might not know.",
+      description: "Search the live internet for up-to-date information, news, facts, prices, statistics or anything outside your training data.",
       parameters: {
         type: "object",
-        properties: {
-          query: { type: "string", description: "The search query to look up on the web" },
-        },
+        properties: { query: { type: "string", description: "The search query" } },
         required: ["query"],
         additionalProperties: false,
       },
@@ -64,12 +62,10 @@ const AGENT_TOOLS = [
     type: "function",
     function: {
       name: "calculator",
-      description: "Evaluate a mathematical expression. Supports +, -, *, /, %, **, parentheses, and Math functions like sqrt, pow, sin, cos. Use for any precise arithmetic.",
+      description: "Evaluate a mathematical expression. Supports +, -, *, /, %, **, parentheses, and Math.* functions.",
       parameters: {
         type: "object",
-        properties: {
-          expression: { type: "string", description: "Math expression, e.g. '(2500 * 0.18) + 200' or 'Math.sqrt(144)'" },
-        },
+        properties: { expression: { type: "string", description: "Math expression, e.g. '(2500 * 0.18) + 200'" } },
         required: ["expression"],
         additionalProperties: false,
       },
@@ -79,50 +75,94 @@ const AGENT_TOOLS = [
     type: "function",
     function: {
       name: "current_datetime",
-      description: "Get the current date and time in a given IANA timezone (default UTC). Use for any 'today', 'now', 'current time' style questions.",
+      description: "Get the current date and time in a given IANA timezone (default UTC).",
+      parameters: {
+        type: "object",
+        properties: { timezone: { type: "string", description: "IANA tz like 'Asia/Kolkata'", default: "UTC" } },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "fetch_url",
+      description: "Fetch and read the readable text content of a web page URL. Use after web_search to read full article content, or for any direct URL the user provides.",
+      parameters: {
+        type: "object",
+        properties: { url: { type: "string", description: "Full https URL" } },
+        required: ["url"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "save_memory",
+      description: "Persist a fact about the user to long-term memory for future conversations. Use when the user shares preferences, personal info, project details, or anything worth remembering.",
       parameters: {
         type: "object",
         properties: {
-          timezone: { type: "string", description: "IANA tz like 'Asia/Kolkata' or 'UTC'", default: "UTC" },
+          key: { type: "string", description: "Short snake_case key, e.g. 'favorite_language'" },
+          value: { type: "string", description: "The value to remember" },
         },
+        required: ["key", "value"],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "recall_memory",
+      description: "Look up stored long-term memory about the user. Optionally filter by key substring.",
+      parameters: {
+        type: "object",
+        properties: { key_contains: { type: "string", description: "Optional substring filter" } },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "code_exec",
+      description: "Execute a small piece of sandboxed JavaScript and return the result. Use for data transformations, JSON parsing, regex, string manipulation, or any deterministic logic. No network or filesystem.",
+      parameters: {
+        type: "object",
+        properties: { code: { type: "string", description: "JS expression or function body. Must `return` the result." } },
+        required: ["code"],
         additionalProperties: false,
       },
     },
   },
 ];
 
-// Run a tool and return a string result
-async function runTool(name: string, args: any): Promise<string> {
+interface ToolCtx { adminClient: any; userId: string | null; agentId: string | null; }
+
+async function runTool(name: string, args: any, ctx: ToolCtx): Promise<string> {
   try {
     if (name === "calculator") {
       const expr = String(args?.expression ?? "");
-      // Allow only safe characters & Math.*
       if (!/^[\d+\-*/().,\s%a-zA-Z_]+$/.test(expr)) return "Error: invalid characters in expression";
-      // eslint-disable-next-line no-new-func
       const fn = new Function("Math", `"use strict"; return (${expr});`);
-      const value = fn(Math);
-      return `Result: ${value}`;
+      return `Result: ${fn(Math)}`;
     }
     if (name === "current_datetime") {
       const tz = args?.timezone || "UTC";
       const now = new Date();
-      const formatted = new Intl.DateTimeFormat("en-US", {
-        dateStyle: "full",
-        timeStyle: "long",
-        timeZone: tz,
-      }).format(now);
+      const formatted = new Intl.DateTimeFormat("en-US", { dateStyle: "full", timeStyle: "long", timeZone: tz }).format(now);
       return `Current datetime in ${tz}: ${formatted} (ISO: ${now.toISOString()})`;
     }
     if (name === "web_search") {
       const q = String(args?.query ?? "").trim();
       if (!q) return "Error: empty query";
-      // DuckDuckGo HTML endpoint — no API key, public
       const res = await fetch(`https://duckduckgo.com/html/?q=${encodeURIComponent(q)}`, {
         headers: { "User-Agent": "Mozilla/5.0 (compatible; LovableAgent/1.0)" },
       });
       if (!res.ok) return `Web search failed with status ${res.status}`;
       const html = await res.text();
-      // Extract top 5 results (title + url + snippet)
       const results: { title: string; url: string; snippet: string }[] = [];
       const blockRe = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>/g;
       let m: RegExpExecArray | null;
@@ -138,6 +178,51 @@ async function runTool(name: string, args: any): Promise<string> {
       }
       if (results.length === 0) return `No web results found for "${q}".`;
       return results.map((r, i) => `${i + 1}. ${r.title}\n   ${r.url}\n   ${r.snippet}`).join("\n\n");
+    }
+    if (name === "fetch_url") {
+      const url = String(args?.url ?? "").trim();
+      if (!/^https?:\/\//i.test(url)) return "Error: url must start with http(s)://";
+      const res = await fetch(`https://r.jina.ai/${url}`, { headers: { "User-Agent": "Mozilla/5.0 LovableAgent" } });
+      if (!res.ok) return `Fetch failed with status ${res.status}`;
+      const text = await res.text();
+      return text.slice(0, 8000);
+    }
+    if (name === "save_memory") {
+      if (!ctx.userId || !ctx.agentId) return "Error: memory requires login";
+      const key = String(args?.key ?? "").trim();
+      const value = String(args?.value ?? "").trim();
+      if (!key || !value) return "Error: key and value required";
+      await ctx.adminClient.from('agent_memory').upsert(
+        { user_id: ctx.userId, agent_id: ctx.agentId, key, value, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id,agent_id,key' }
+      );
+      return `Saved: ${key} = ${value}`;
+    }
+    if (name === "recall_memory") {
+      if (!ctx.userId || !ctx.agentId) return "Error: memory requires login";
+      const filter = String(args?.key_contains ?? "").trim();
+      let q = ctx.adminClient.from('agent_memory').select('key, value').eq('user_id', ctx.userId).eq('agent_id', ctx.agentId).limit(50);
+      if (filter) q = q.ilike('key', `%${filter}%`);
+      const { data, error } = await q;
+      if (error) return `Error: ${error.message}`;
+      if (!data || data.length === 0) return "No memories found.";
+      return data.map((m: any) => `${m.key}: ${m.value}`).join('\n');
+    }
+    if (name === "code_exec") {
+      const code = String(args?.code ?? "");
+      if (!code.trim()) return "Error: empty code";
+      try {
+        const fn = new Function(
+          "fetch", "Deno", "globalThis", "process", "window",
+          `"use strict"; ${code.includes("return") ? code : `return (${code});`}`
+        );
+        const out = fn(undefined, undefined, undefined, undefined, undefined);
+        const resolved = out && typeof (out as any).then === "function" ? await out : out;
+        const str = typeof resolved === "string" ? resolved : JSON.stringify(resolved, null, 2);
+        return `Result: ${str?.slice(0, 4000)}`;
+      } catch (e) {
+        return `Code error: ${e instanceof Error ? e.message : String(e)}`;
+      }
     }
     return `Unknown tool: ${name}`;
   } catch (e) {
@@ -294,14 +379,19 @@ serve(async (req) => {
 
 You are a real professional expert. Be specific, actionable, and structured.
 
-🧰 TOOLS AVAILABLE (function calling):
+🧰 TOOLS AVAILABLE (function calling — use them whenever helpful, don't hallucinate):
 - web_search(query): Search the live internet for fresh facts, news, prices.
+- fetch_url(url): Read full readable content of any web page.
 - calculator(expression): Evaluate any math precisely.
-- current_datetime(timezone): Get the current date/time.
-USE these tools whenever they would improve accuracy. Don't hallucinate facts you can look up.
+- current_datetime(timezone): Get the current date/time in any timezone.
+- save_memory(key, value): Persist a fact about this user for future chats.
+- recall_memory(key_contains?): Look up what you remember about this user.
+- code_exec(code): Run sandboxed JS for parsing, regex, transforms, logic.
+
+Use a ReAct style: think → call tools → observe results → decide next step → final answer. Chain multiple tools across turns when needed.
 
 🧠 MEMORY:
-At the END of your final reply, if you learned facts about the user, output:
+At the END of your final reply, if you learned facts about the user (and didn't already save via save_memory), output:
 <MEMORY>
 key: value
 </MEMORY>
@@ -345,7 +435,7 @@ ${memoryContext}`;
           const send = (obj: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
           let fullText = "";
           try {
-            const MAX_ITERATIONS = 5;
+            const MAX_ITERATIONS = 10;
             for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
               const body: any = { model, messages: messagesArray, max_tokens: 4000, stream: true };
               if (useTools) { body.tools = AGENT_TOOLS; body.tool_choice = "auto"; }
@@ -419,7 +509,7 @@ ${memoryContext}`;
                 let args: any = {};
                 try { args = JSON.parse(tc.arguments || "{}"); } catch { /* ignore */ }
                 send({ type: "tool_call_start", id: tc.id, name: tc.name, arguments: args });
-                const result = await runTool(tc.name, args);
+                const result = await runTool(tc.name, args, { adminClient, userId: user?.id ?? null, agentId: agentId ?? null });
                 send({ type: "tool_call_end", id: tc.id, name: tc.name, result: result.slice(0, 500) });
                 messagesArray.push({ role: "tool", tool_call_id: tc.id, content: result });
               }
