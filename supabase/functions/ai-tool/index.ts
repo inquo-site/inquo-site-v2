@@ -509,7 +509,7 @@ ${memoryContext}`;
                 let args: any = {};
                 try { args = JSON.parse(tc.arguments || "{}"); } catch { /* ignore */ }
                 send({ type: "tool_call_start", id: tc.id, name: tc.name, arguments: args });
-                const result = await runTool(tc.name, args);
+                const result = await runTool(tc.name, args, { adminClient, userId: user?.id ?? null, agentId: agentId ?? null });
                 send({ type: "tool_call_end", id: tc.id, name: tc.name, result: result.slice(0, 500) });
                 messagesArray.push({ role: "tool", tool_call_id: tc.id, content: result });
               }
