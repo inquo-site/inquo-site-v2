@@ -435,7 +435,7 @@ ${memoryContext}`;
           const send = (obj: any) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
           let fullText = "";
           try {
-            const MAX_ITERATIONS = 5;
+            const MAX_ITERATIONS = 10;
             for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
               const body: any = { model, messages: messagesArray, max_tokens: 4000, stream: true };
               if (useTools) { body.tools = AGENT_TOOLS; body.tool_choice = "auto"; }
