@@ -155,6 +155,10 @@ function logFC(event: string, data: Record<string, any> = {}) {
 export async function runTool(name: string, args: any, ctx: ToolCtx): Promise<string> {
   const startedAt = Date.now();
   logFC("tool_request", { name, args_keys: args && typeof args === 'object' ? Object.keys(args) : [], user_id: ctx.userId, agent_id: ctx.agentId });
+  const finish = (result: string, error?: string) => {
+    logFC(error ? "tool_error" : "tool_response", { name, duration_ms: Date.now() - startedAt, result_len: result.length, error });
+    return result;
+  };
   try {
     if (name === "calculator") {
       const expr = String(args?.expression ?? "");
