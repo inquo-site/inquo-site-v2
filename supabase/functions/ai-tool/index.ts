@@ -141,7 +141,20 @@ const AGENT_TOOLS = [
 
 interface ToolCtx { adminClient: any; userId: string | null; agentId: string | null; }
 
-async function runTool(name: string, args: any, ctx: ToolCtx): Promise<string> {
+// ============================================================
+// STRUCTURED LOGGING for function calling debug
+// ============================================================
+function logFC(event: string, data: Record<string, any> = {}) {
+  try {
+    console.log(JSON.stringify({ scope: "function_calling", event, ts: new Date().toISOString(), ...data }));
+  } catch {
+    console.log(`[function_calling] ${event}`, data);
+  }
+}
+
+export async function runTool(name: string, args: any, ctx: ToolCtx): Promise<string> {
+  const startedAt = Date.now();
+  logFC("tool_request", { name, args_keys: args && typeof args === 'object' ? Object.keys(args) : [], user_id: ctx.userId, agent_id: ctx.agentId });
   try {
     if (name === "calculator") {
       const expr = String(args?.expression ?? "");
