@@ -241,9 +241,10 @@ export async function runTool(name: string, args: any, ctx: ToolCtx): Promise<st
         return `Code error: ${e instanceof Error ? e.message : String(e)}`;
       }
     }
-    return `Unknown tool: ${name}`;
+    return finish(`Unknown tool: ${name}`, "unknown_tool");
   } catch (e) {
-    return `Tool error: ${e instanceof Error ? e.message : String(e)}`;
+    const msg = e instanceof Error ? e.message : String(e);
+    return finish(`Tool error: ${msg}`, msg);
   }
 }
 
