@@ -406,7 +406,8 @@ ${memoryContext}`;
     messagesArray.push({ role: 'user', content: userContent });
 
     const useStreaming = requestStream === true && toolType === 'agent-chat';
-    const useTools = enableTools === true && toolType === 'agent-chat' && !hasImages;
+    // Function calling enabled for ALL agents (including with image inputs)
+    const useTools = toolType === 'agent-chat';
 
     const MODEL_MAP: Record<string, string> = {
       'gemini': 'google/gemini-2.5-flash',
