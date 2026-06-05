@@ -524,11 +524,16 @@ ${memoryContext}`;
               });
 
               // Execute each tool, emit chip events
+              logFC("iteration_tool_calls", { iter, count: toolCalls.length, names: toolCalls.map(t => t.name) });
               for (const tc of toolCalls) {
                 let args: any = {};
-                try { args = JSON.parse(tc.arguments || "{}"); } catch { /* ignore */ }
+                let parseError: string | undefined;
+                try { args = JSON.parse(tc.arguments || "{}"); } catch (e) { parseError = e instanceof Error ? e.message : String(e); }
+                if (parseError) logFC("tool_args_parse_error", { name: tc.name, error: parseError, raw: tc.arguments?.slice(0, 200) });
                 send({ type: "tool_call_start", id: tc.id, name: tc.name, arguments: args });
+                const t0 = Date.now();
                 const result = await runTool(tc.name, args, { adminClient, userId: user?.id ?? null, agentId: agentId ?? null });
+                logFC("tool_executed", { name: tc.name, duration_ms: Date.now() - t0, result_len: result.length, preview: result.slice(0, 120) });
                 send({ type: "tool_call_end", id: tc.id, name: tc.name, result: result.slice(0, 500) });
                 messagesArray.push({ role: "tool", tool_call_id: tc.id, content: result });
               }
