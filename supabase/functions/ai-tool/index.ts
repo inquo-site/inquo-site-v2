@@ -44,7 +44,7 @@ const TOOL_PROMPTS: Record<string, string> = {
 // ============================================================
 // AGENT TOOLS (Function Calling) — web_search, calculator, current_datetime
 // ============================================================
-const AGENT_TOOLS = [
+export const AGENT_TOOLS = [
   {
     type: "function",
     function: {
