@@ -44,7 +44,7 @@ const TOOL_PROMPTS: Record<string, string> = {
 // ============================================================
 // AGENT TOOLS (Function Calling) — web_search, calculator, current_datetime
 // ============================================================
-const AGENT_TOOLS = [
+export const AGENT_TOOLS = [
   {
     type: "function",
     function: {
@@ -141,7 +141,24 @@ const AGENT_TOOLS = [
 
 interface ToolCtx { adminClient: any; userId: string | null; agentId: string | null; }
 
-async function runTool(name: string, args: any, ctx: ToolCtx): Promise<string> {
+// ============================================================
+// STRUCTURED LOGGING for function calling debug
+// ============================================================
+function logFC(event: string, data: Record<string, any> = {}) {
+  try {
+    console.log(JSON.stringify({ scope: "function_calling", event, ts: new Date().toISOString(), ...data }));
+  } catch {
+    console.log(`[function_calling] ${event}`, data);
+  }
+}
+
+export async function runTool(name: string, args: any, ctx: ToolCtx): Promise<string> {
+  const startedAt = Date.now();
+  logFC("tool_request", { name, args_keys: args && typeof args === 'object' ? Object.keys(args) : [], user_id: ctx.userId, agent_id: ctx.agentId });
+  const finish = (result: string, error?: string) => {
+    logFC(error ? "tool_error" : "tool_response", { name, duration_ms: Date.now() - startedAt, result_len: result.length, error });
+    return result;
+  };
   try {
     if (name === "calculator") {
       const expr = String(args?.expression ?? "");
@@ -224,9 +241,10 @@ async function runTool(name: string, args: any, ctx: ToolCtx): Promise<string> {
         return `Code error: ${e instanceof Error ? e.message : String(e)}`;
       }
     }
-    return `Unknown tool: ${name}`;
+    return finish(`Unknown tool: ${name}`, "unknown_tool");
   } catch (e) {
-    return `Tool error: ${e instanceof Error ? e.message : String(e)}`;
+    const msg = e instanceof Error ? e.message : String(e);
+    return finish(`Tool error: ${msg}`, msg);
   }
 }
 
@@ -506,11 +524,16 @@ ${memoryContext}`;
               });
 
               // Execute each tool, emit chip events
+              logFC("iteration_tool_calls", { iter, count: toolCalls.length, names: toolCalls.map(t => t.name) });
               for (const tc of toolCalls) {
                 let args: any = {};
-                try { args = JSON.parse(tc.arguments || "{}"); } catch { /* ignore */ }
+                let parseError: string | undefined;
+                try { args = JSON.parse(tc.arguments || "{}"); } catch (e) { parseError = e instanceof Error ? e.message : String(e); }
+                if (parseError) logFC("tool_args_parse_error", { name: tc.name, error: parseError, raw: tc.arguments?.slice(0, 200) });
                 send({ type: "tool_call_start", id: tc.id, name: tc.name, arguments: args });
+                const t0 = Date.now();
                 const result = await runTool(tc.name, args, { adminClient, userId: user?.id ?? null, agentId: agentId ?? null });
+                logFC("tool_executed", { name: tc.name, duration_ms: Date.now() - t0, result_len: result.length, preview: result.slice(0, 120) });
                 send({ type: "tool_call_end", id: tc.id, name: tc.name, result: result.slice(0, 500) });
                 messagesArray.push({ role: "tool", tool_call_id: tc.id, content: result });
               }
