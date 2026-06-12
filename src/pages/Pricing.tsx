@@ -1,16 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Accordion,
   AccordionContent,
@@ -25,75 +20,82 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Coins,
+  Check,
+  X as XIcon,
   Sparkles,
-  Zap,
-  Bot,
-  Wrench,
-  Gift,
-  Globe,
-  HelpCircle,
+  Crown,
   ArrowRight,
   Copy,
-  Check,
-  Calculator,
+  Globe,
+  HelpCircle,
+  Coins,
+  Building2,
   Info,
-  Image as ImageIcon,
-  FileText,
-  MessageSquare,
-  Code2,
-  Shield,
-  Headphones,
-  Infinity as InfinityIcon,
-  Rocket,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import {
   CountrySelector,
   getSelectedCountry,
-  isIndianUser,
 } from "@/components/CountrySelector";
 import { SEOHead } from "@/components/SEOHead";
 import { PromoPopup } from "@/components/PromoPopup";
 import { toast } from "@/hooks/use-toast";
+import {
+  PLANS,
+  FEATURE_MATRIX,
+  getRegionForCountry,
+  yearlyPrice,
+  buildEnterpriseMailto,
+  YEARLY_DISCOUNT_PCT,
+  type PlanKey,
+  type RegionPricing,
+} from "@/lib/pricingPlans";
 
-const PRESET_OPTIONS = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
-const TOKEN_PRICE_INR = 0.99;
-const TOKEN_PRICE_USD = 0.04;
-const FREE_MONTHLY_TOKENS = 20;
 const UPI_ID = "webcraftmaster915@okicici";
+const SUPPORT_EMAIL = "inquo4@gmail.com";
+
+const TOPUP_PRESETS_INR = [
+  { tokens: 100, price: 99 },
+  { tokens: 300, price: 297 },
+  { tokens: 1000, price: 990 },
+];
+const TOPUP_PRESETS_USD = [
+  { tokens: 100, price: 4 },
+  { tokens: 300, price: 12 },
+  { tokens: 1000, price: 40 },
+];
 
 const Pricing = () => {
-  const [isIndia, setIsIndia] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const [yearly, setYearly] = useState(params.get("yearly") === "1");
   const [selectedCountry, setSelectedCountry] = useState<any>(null);
-  const [selectedPreset, setSelectedPreset] = useState<string>("300");
-  const [customTokens, setCustomTokens] = useState<string>("");
+  const [region, setRegion] = useState<RegionPricing>(() =>
+    getRegionForCountry(null),
+  );
   const [buyOpen, setBuyOpen] = useState(false);
+  const [activePlan, setActivePlan] = useState<PlanKey | null>(null);
+  const [topupOpen, setTopupOpen] = useState(params.get("topup") === "1");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setSelectedCountry(getSelectedCountry());
-    setIsIndia(isIndianUser());
+    const c = getSelectedCountry();
+    setSelectedCountry(c);
+    setRegion(getRegionForCountry(c?.code));
   }, []);
-
-  const tokens = useMemo(() => {
-    if (selectedPreset === "custom") {
-      const n = parseInt(customTokens, 10);
-      return Number.isFinite(n) && n > 0 ? n : 0;
-    }
-    return parseInt(selectedPreset, 10) || 0;
-  }, [selectedPreset, customTokens]);
-
-  const symbol = isIndia ? "₹" : "$";
-  const unit = isIndia ? TOKEN_PRICE_INR : TOKEN_PRICE_USD;
-  const totalRaw = tokens * unit;
-  const total = isIndia ? Math.round(totalRaw) : Number(totalRaw.toFixed(2));
 
   const handleChangeCountry = () => {
     localStorage.removeItem("user_country");
     window.location.reload();
+  };
+
+  const handleSelectPlan = (key: PlanKey) => {
+    if (key === "free") {
+      window.location.href = "/auth";
+      return;
+    }
+    setActivePlan(key);
+    setBuyOpen(true);
   };
 
   const handleCopyUPI = async () => {
@@ -103,315 +105,339 @@ const Pricing = () => {
     setTimeout(() => setCopied(false), 1800);
   };
 
-  const usageExamples = [
-    { icon: Wrench, label: "AI Tools", cost: "1–2 tokens", note: "Per use (grammar, summarizer, ad copy, etc.)" },
-    { icon: Bot, label: "AI Agents", cost: "5–15 tokens", note: "Per task (depending on complexity & length)" },
-    { icon: Sparkles, label: "Image Gen", cost: "5–10 tokens", note: "Per image (size & model dependent)" },
-  ];
+  const activePlanMeta = useMemo(
+    () => PLANS.find((p) => p.key === activePlan),
+    [activePlan],
+  );
 
-  const includedFeatures = [
-    { icon: Wrench, title: "160+ AI Tools", desc: "Grammar fixer, summarizer, ad copy, blog generator, code helper & more — all unlocked." },
-    { icon: Bot, title: "All AI Agents", desc: "Use every autonomous agent — research, writing, marketing, coding — nothing locked." },
-    { icon: ImageIcon, title: "AI Image Generation", desc: "Generate images with your tokens. No daily caps, no watermarks." },
-    { icon: MessageSquare, title: "Multi-Model Chat", desc: "Chat with Gemini, ChatGPT, and DeepSeek — switch any time." },
-    { icon: FileText, title: "File & Link Analysis", desc: "Upload documents up to 10MB or paste any link — agents read & understand." },
-    { icon: Code2, title: "Code & Dev Tools", desc: "Code generator, debugger, explainer — speed up your dev workflow." },
-    { icon: InfinityIcon, title: "Tokens Never Expire", desc: "Purchased tokens stay in your wallet forever — use them whenever." },
-    { icon: Shield, title: "Private & Secure", desc: "Your data is encrypted. We never train models on your prompts." },
-    { icon: Headphones, title: "Priority Support", desc: "Email support with quick response — token buyers get priority." },
-  ];
+  const activePrice = useMemo(() => {
+    if (!activePlan) return 0;
+    const m = region.prices[activePlan];
+    return yearly ? yearlyPrice(m) : m;
+  }, [activePlan, region, yearly]);
 
-  const faqs = [
-    {
-      q: "How does the token system work?",
-      a: `Buy any number of tokens you need. Tools cost 1–2 tokens per use, agents cost 5–15 tokens per task. Tokens never expire on paid packs.`,
-    },
-    {
-      q: "Do I get any free tokens?",
-      a: `Yes — every account gets ${FREE_MONTHLY_TOKENS} free tokens per month, refreshed automatically. No card required.`,
-    },
-    {
-      q: "What is the price per token?",
-      a: `₹${TOKEN_PRICE_INR} per token for India and $${TOKEN_PRICE_USD} per token globally. The more you buy, the longer it lasts — no subscription, no recurring fee.`,
-    },
-    {
-      q: "Can I buy a custom amount?",
-      a: `Absolutely. Pick any preset from 100 to 1000, or choose Custom and enter exactly how many tokens you want.`,
-    },
-    {
-      q: "How do I pay?",
-      a: isIndia
-        ? "Pay via UPI to our official ID. After payment share the UTR with support and tokens are credited within minutes."
-        : "International users can pay via UPI (if available) or contact support@inquo.site for PayPal / bank transfer.",
-    },
-    {
-      q: "Do tokens expire?",
-      a: "Free monthly tokens reset every month. Purchased tokens stay in your wallet until used.",
-    },
-  ];
-
-  const isCustom = selectedPreset === "custom";
-  const canBuy = tokens > 0;
+  const topupPresets =
+    region.code === "IN" ? TOPUP_PRESETS_INR : TOPUP_PRESETS_USD;
 
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Token Pricing — Pay Only For What You Use | InQuo"
-        description={`Simple token-based pricing. ${symbol}${unit} per token. Buy 100 to 1000 or custom. Tools cost 1–2 tokens, agents 5–15. ${FREE_MONTHLY_TOKENS} free tokens monthly.`}
-        keywords="AI tokens, pay per use AI, token pricing, AI credits, InQuo pricing"
+        title="Pricing — Plans for every stage | InQuo"
+        description={`Simple ${region.label} pricing. Free, Basic, Pro and Business plans. Switch monthly or yearly (save ${YEARLY_DISCOUNT_PCT}%).`}
+        keywords="InQuo pricing, AI plans, subscription pricing, AI agents pricing"
         canonicalUrl="https://inquo.site/pricing"
       />
       <PromoPopup />
       <Navbar />
-      <CountrySelector onSelect={() => setIsIndia(isIndianUser())} />
+      <CountrySelector
+        onSelect={() => {
+          const c = getSelectedCountry();
+          setSelectedCountry(c);
+          setRegion(getRegionForCountry(c?.code));
+        }}
+      />
 
       <div className="pt-28 pb-20 px-4">
-        <div className="container mx-auto max-w-5xl">
+        <div className="container mx-auto max-w-6xl">
           {/* Header */}
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <Badge className="mb-4 px-4 py-1">
-              <Coins className="w-3 h-3 mr-1" />
-              Token Pricing
+              <Sparkles className="w-3 h-3 mr-1" />
+              Plans & Pricing
             </Badge>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-              Pay Only For <span className="text-gradient">What You Use</span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-5">
+              Pick the plan that <span className="text-gradient">fits you</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-3">
-              One simple price. <strong>{symbol}{unit}</strong> per token.
-              No plans, no subscriptions, no surprises.
-            </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              <Gift className="inline w-4 h-4 mr-1 text-accent" />
-              Every account gets <strong>{FREE_MONTHLY_TOKENS} free tokens / month</strong>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+              Start free. Upgrade only when you need more. Cancel anytime — no hidden fees.
             </p>
 
+            {/* Country pill */}
             {selectedCountry && (
               <button
                 onClick={handleChangeCountry}
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
               >
                 <Globe className="w-4 h-4" />
                 <span>
-                  {selectedCountry.flag} Showing prices for {selectedCountry.name}
+                  {selectedCountry.flag} Prices for {region.label} ({region.currency})
                 </span>
-                <span className="underline">(Change)</span>
+                <span className="underline">Change</span>
               </button>
             )}
-          </div>
 
-          {/* Token Calculator */}
-          <Card className="p-8 mb-12 border-2 border-accent/30 bg-gradient-to-br from-accent/5 to-transparent shadow-xl">
-            <div className="flex items-center gap-2 mb-6">
-              <Calculator className="w-5 h-5 text-accent" />
-              <h2 className="text-2xl font-bold">Choose Your Tokens</h2>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Selector */}
-              <div className="space-y-4">
-                <div>
-                  <Label className="mb-2 block">Token Quantity</Label>
-                  <Select
-                    value={selectedPreset}
-                    onValueChange={(v) => setSelectedPreset(v)}
-                  >
-                    <SelectTrigger className="h-14 text-lg font-semibold">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-72">
-                      {PRESET_OPTIONS.map((n) => (
-                        <SelectItem key={n} value={String(n)}>
-                          {n.toLocaleString()} tokens
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="custom">Custom amount…</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {isCustom && (
-                  <div className="animate-fade-in">
-                    <Label className="mb-2 block">Enter custom token count</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      placeholder="e.g. 1500"
-                      value={customTokens}
-                      onChange={(e) => setCustomTokens(e.target.value)}
-                      className="h-12 text-lg"
-                    />
-                  </div>
-                )}
-
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {[100, 300, 500, 1000].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setSelectedPreset(String(q))}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                        selectedPreset === String(q)
-                          ? "bg-accent text-accent-foreground border-accent"
-                          : "border-border hover:border-accent/50"
-                      }`}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Total */}
-              <div className="rounded-xl bg-card border-2 border-border p-6 flex flex-col justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">You'll get</p>
-                  <p className="text-4xl font-bold mb-4">
-                    {tokens.toLocaleString()}{" "}
-                    <span className="text-base text-muted-foreground font-normal">
-                      tokens
-                    </span>
-                  </p>
-                  <div className="h-px bg-border my-4" />
-                  <p className="text-sm text-muted-foreground mb-1">Total price</p>
-                  <p className="text-5xl font-bold text-accent">
-                    {symbol}
-                    {total.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {symbol}{unit} per token · one-time payment
-                  </p>
-                </div>
-
-                <Button
-                  size="lg"
-                  className="w-full mt-6 h-12 text-base font-semibold bg-accent hover:bg-accent/90 text-accent-foreground"
-                  disabled={!canBuy}
-                  onClick={() => setBuyOpen(true)}
-                >
-                  Buy {tokens.toLocaleString()} Tokens
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-
-          {/* Usage Examples */}
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold text-center mb-2">
-              How tokens are spent
-            </h2>
-            <p className="text-center text-muted-foreground mb-8">
-              Transparent usage. You always see the cost before you run anything.
-            </p>
-            <div className="grid md:grid-cols-3 gap-4">
-              {usageExamples.map((u, i) => (
-                <Card
-                  key={i}
-                  className="p-6 border-2 hover:border-accent/50 transition-all"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center mb-3">
-                    <u.icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-bold mb-1">{u.label}</h3>
-                  <p className="text-accent font-semibold mb-1">{u.cost}</p>
-                  <p className="text-sm text-muted-foreground">{u.note}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Everything You Get */}
-          <div className="mb-16">
-            <div className="text-center mb-10">
-              <Badge className="mb-4 px-4 py-1">
-                <Rocket className="w-3 h-3 mr-1" />
-                Everything Included
+            {/* Billing toggle */}
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border bg-card">
+              <span
+                className={`text-sm font-medium ${!yearly ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                Monthly
+              </span>
+              <Switch
+                checked={yearly}
+                onCheckedChange={(v) => {
+                  setYearly(v);
+                  const p = new URLSearchParams(params);
+                  if (v) p.set("yearly", "1");
+                  else p.delete("yearly");
+                  setParams(p, { replace: true });
+                }}
+              />
+              <span
+                className={`text-sm font-medium ${yearly ? "text-foreground" : "text-muted-foreground"}`}
+              >
+                Yearly
+              </span>
+              <Badge variant="secondary" className="text-xs">
+                Save {YEARLY_DISCOUNT_PCT}%
               </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-3">
-                What you get with <span className="text-gradient">every token</span>
-              </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                One token wallet unlocks the entire platform. No locked tiers, no upsells — just buy tokens and use anything.
-              </p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {includedFeatures.map((f, i) => (
-                <Card
-                  key={i}
-                  className="p-5 border hover:border-accent/50 hover:shadow-lg transition-all group"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-accent/10 text-accent flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                      <f.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold mb-1">{f.title}</h3>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
             </div>
           </div>
 
-          <Card className="p-6 mb-16 border-2 border-dashed border-accent/40 bg-accent/5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-accent/15 flex items-center justify-center text-accent flex-shrink-0">
-              <Gift className="w-6 h-6" />
+          {/* Plan cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-12">
+            {PLANS.map((plan) => {
+              const monthly = region.prices[plan.key];
+              const price = yearly ? yearlyPrice(monthly) : monthly;
+              const isFree = monthly === 0;
+              return (
+                <Card
+                  key={plan.key}
+                  className={`p-6 flex flex-col relative transition-all ${
+                    plan.popular
+                      ? "border-2 border-accent shadow-xl scale-[1.02] bg-gradient-to-b from-accent/5 to-transparent"
+                      : "border hover:border-accent/40"
+                  }`}
+                >
+                  {plan.popular && (
+                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground">
+                      Most popular
+                    </Badge>
+                  )}
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold">{plan.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {plan.tagline}
+                    </p>
+                  </div>
+                  <div className="mb-5">
+                    {isFree ? (
+                      <p className="text-4xl font-bold">{region.symbol}0</p>
+                    ) : (
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold">
+                          {region.symbol}
+                          {price.toLocaleString()}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          /{yearly ? "yr" : "mo"}
+                        </span>
+                      </div>
+                    )}
+                    {!isFree && yearly && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Equivalent {region.symbol}
+                        {Math.round((price / 12)).toLocaleString()}/mo
+                      </p>
+                    )}
+                  </div>
+                  <ul className="space-y-2 mb-6 flex-1">
+                    {plan.highlights.map((h, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        <Check className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+                        <span>{h}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    onClick={() => handleSelectPlan(plan.key)}
+                    variant={plan.popular ? "default" : "outline"}
+                    className={`w-full ${plan.popular ? "bg-accent hover:bg-accent/90 text-accent-foreground" : ""}`}
+                  >
+                    {plan.ctaLabel}
+                    {!isFree && <ArrowRight className="ml-2 w-4 h-4" />}
+                  </Button>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Enterprise strip */}
+          <Card className="p-6 mb-14 border-2 border-dashed bg-gradient-to-r from-primary/5 to-accent/5 flex flex-col md:flex-row md:items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-6 h-6" />
             </div>
             <div className="flex-1">
-              <h3 className="font-bold text-lg mb-1">
-                {FREE_MONTHLY_TOKENS} free tokens every month
-              </h3>
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-bold">Enterprise</h3>
+                <Badge variant="outline" className="text-xs">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Custom
+                </Badge>
+              </div>
               <p className="text-sm text-muted-foreground">
-                Sign up and use {FREE_MONTHLY_TOKENS} tokens per month at zero cost.
-                Resets automatically. Top up only when you need more.
+                Custom agents, SSO/SAML, SLA 99.9%, white-label, API access &
+                private deployment. Tailored for agencies & large orgs.
               </p>
             </div>
-            <Button asChild variant="outline">
-              <Link to="/auth">
-                Get free tokens <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
+            <Button asChild size="lg">
+              <a href={buildEnterpriseMailto()}>
+                Contact Sales <ArrowRight className="ml-2 w-4 h-4" />
+              </a>
             </Button>
           </Card>
 
+          {/* Feature comparison */}
+          <div className="mb-16">
+            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2">
+              Compare features
+            </h2>
+            <p className="text-center text-muted-foreground mb-8">
+              See exactly what each plan unlocks.
+            </p>
+            <div className="overflow-x-auto rounded-xl border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/40">
+                  <tr>
+                    <th className="text-left p-4 font-semibold">Feature</th>
+                    {PLANS.map((p) => (
+                      <th
+                        key={p.key}
+                        className={`text-center p-4 font-semibold ${p.popular ? "text-accent" : ""}`}
+                      >
+                        {p.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {FEATURE_MATRIX.map((row, i) => (
+                    <tr key={i} className="border-t">
+                      <td className="p-4 font-medium">{row.label}</td>
+                      {(["free", "basic", "pro", "business"] as PlanKey[]).map(
+                        (k) => {
+                          const v = row[k];
+                          return (
+                            <td key={k} className="p-4 text-center">
+                              {typeof v === "boolean" ? (
+                                v ? (
+                                  <Check className="w-4 h-4 text-accent inline" />
+                                ) : (
+                                  <XIcon className="w-4 h-4 text-muted-foreground/50 inline" />
+                                )
+                              ) : (
+                                <span className="text-sm">{v}</span>
+                              )}
+                            </td>
+                          );
+                        },
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Top-up — collapsed, opens on demand */}
+          <Card className="p-6 mb-16 border-2 border-accent/20">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 text-accent flex items-center justify-center flex-shrink-0">
+                <Coins className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg">
+                  Need extra capacity? Top-up tokens
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  One-time packs that stack on top of any plan. Tokens never expire.
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => setTopupOpen(true)}>
+                View top-up packs
+              </Button>
+            </div>
+          </Card>
+
           {/* FAQs */}
-          <div className="max-w-3xl mx-auto mb-16">
-            <div className="text-center mb-10">
-              <Badge className="mb-4 px-4 py-1">
+          <div className="max-w-3xl mx-auto mb-12">
+            <div className="text-center mb-8">
+              <Badge className="mb-3 px-4 py-1">
                 <HelpCircle className="w-3 h-3 mr-1" />
                 FAQs
               </Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-                Frequently Asked <span className="text-gradient">Questions</span>
+              <h2 className="text-3xl font-bold">
+                Frequently asked <span className="text-gradient">questions</span>
               </h2>
             </div>
-
             <Accordion type="single" collapsible className="space-y-3">
-              {faqs.map((faq, index) => (
-                <AccordionItem
-                  key={index}
-                  value={`faq-${index}`}
-                  className="border-2 border-border/50 rounded-xl px-6 bg-card/50 hover:border-accent/50 transition-all data-[state=open]:border-accent"
-                >
-                  <AccordionTrigger className="text-left py-4 hover:no-underline">
-                    <span className="font-semibold">{faq.q}</span>
-                  </AccordionTrigger>
-                  <AccordionContent className="pb-4 text-muted-foreground leading-relaxed">
-                    {faq.a}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
+              <AccordionItem
+                value="faq-1"
+                className="border-2 rounded-xl px-6 bg-card/50"
+              >
+                <AccordionTrigger className="font-semibold">
+                  Can I switch plans later?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Yes — upgrade, downgrade or switch monthly ↔ yearly any time.
+                  Yearly billing saves you {YEARLY_DISCOUNT_PCT}% compared to monthly.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem
+                value="faq-2"
+                className="border-2 rounded-xl px-6 bg-card/50"
+              >
+                <AccordionTrigger className="font-semibold">
+                  How do I pay?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  {region.code === "IN"
+                    ? "Pay via UPI to our official ID. Share the UTR with support and your plan activates within minutes."
+                    : `International payments — email ${SUPPORT_EMAIL} with your chosen plan and we'll share PayPal / bank transfer details.`}
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem
+                value="faq-3"
+                className="border-2 rounded-xl px-6 bg-card/50"
+              >
+                <AccordionTrigger className="font-semibold">
+                  What is the Enterprise plan?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  Custom plan with white-label, SSO/SAML, SLA and private
+                  deployment for agencies & large orgs.{" "}
+                  <a
+                    href={buildEnterpriseMailto()}
+                    className="text-accent underline"
+                  >
+                    Contact sales
+                  </a>{" "}
+                  for a quote.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem
+                value="faq-4"
+                className="border-2 rounded-xl px-6 bg-card/50"
+              >
+                <AccordionTrigger className="font-semibold">
+                  Do I need a card to start?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  No. The Free plan is fully usable with zero payment info.
+                </AccordionContent>
+              </AccordionItem>
             </Accordion>
           </div>
 
           {/* CTA */}
           <div className="text-center">
             <Card className="p-10 bg-gradient-to-br from-primary to-accent text-primary-foreground inline-block max-w-2xl">
-              <Zap className="w-10 h-10 mx-auto mb-4" />
+              <Sparkles className="w-10 h-10 mx-auto mb-4" />
               <h3 className="text-2xl sm:text-3xl font-bold mb-3">
-                Start with {FREE_MONTHLY_TOKENS} free tokens today
+                Start free today
               </h3>
               <p className="opacity-90 mb-6">
-                No card. No commitment. Top up only when you love it.
+                No card. Upgrade only when you need more.
               </p>
               <Button asChild size="lg" variant="secondary" className="h-12 px-8">
                 <Link to="/auth">
@@ -426,83 +452,115 @@ const Pricing = () => {
 
       <Footer />
 
-      {/* Buy Tokens Modal — manual UPI */}
+      {/* Subscribe (manual UPI) */}
       <Dialog open={buyOpen} onOpenChange={setBuyOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Buy {tokens.toLocaleString()} Tokens</DialogTitle>
+            <DialogTitle>
+              Subscribe to {activePlanMeta?.name}
+            </DialogTitle>
             <DialogDescription>
-              Pay {symbol}
-              {total.toLocaleString()} via UPI. Tokens credit within minutes after we verify the payment.
+              {yearly ? "Yearly" : "Monthly"} billing · {region.label}
             </DialogDescription>
           </DialogHeader>
 
-          <Card className="p-4 bg-muted/50 mb-2">
+          <Card className="p-4 bg-muted/50">
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-muted-foreground">Tokens</span>
-              <span className="font-semibold">{tokens.toLocaleString()}</span>
+              <span className="text-muted-foreground">Plan</span>
+              <span className="font-semibold">{activePlanMeta?.name}</span>
             </div>
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-muted-foreground">Price / token</span>
-              <span className="font-semibold">
-                {symbol}
-                {unit}
+              <span className="text-muted-foreground">Billing</span>
+              <span className="font-semibold capitalize">
+                {yearly ? "Yearly" : "Monthly"}
               </span>
             </div>
             <div className="h-px bg-border my-2" />
             <div className="flex justify-between items-center">
               <span className="font-medium">Total</span>
               <span className="text-2xl font-bold text-accent">
-                {symbol}
-                {total.toLocaleString()}
+                {region.symbol}
+                {activePrice.toLocaleString()}
               </span>
             </div>
           </Card>
 
-          {isIndia ? (
+          {region.code === "IN" ? (
             <>
               <Label className="text-xs">UPI ID</Label>
               <div className="flex gap-2">
                 <Input value={UPI_ID} readOnly className="font-mono bg-muted" />
                 <Button variant="outline" size="icon" onClick={handleCopyUPI}>
-                  {copied ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </Button>
               </div>
               <div className="flex items-start gap-2 p-3 rounded-lg bg-accent/5 border border-accent/20 text-sm">
                 <Info className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
                 <p className="text-muted-foreground">
-                  Pay <strong>exactly {symbol}{total}</strong> to the UPI ID, then
-                  email your UTR + this token amount to{" "}
-                  <a
-                    href="mailto:inquo4@gmail.com"
-                    className="text-accent underline"
-                  >
-                    inquo4@gmail.com
+                  Pay <strong>{region.symbol}{activePrice}</strong> to the UPI ID,
+                  then email your UTR + plan name (<strong>{activePlanMeta?.name}</strong>) to{" "}
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent underline">
+                    {SUPPORT_EMAIL}
                   </a>
-                  . Tokens credit within minutes.
+                  . Plan activates within minutes.
                 </p>
               </div>
             </>
           ) : (
             <div className="p-3 rounded-lg bg-accent/5 border border-accent/20 text-sm text-muted-foreground">
-              International payments: please email{" "}
-              <a
-                href="mailto:inquo4@gmail.com"
-                className="text-accent underline"
-              >
-                inquo4@gmail.com
+              Email{" "}
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent underline">
+                {SUPPORT_EMAIL}
               </a>{" "}
-              with the token quantity ({tokens.toLocaleString()}) and we'll share PayPal / bank transfer details for ${total}.
+              with the plan name (<strong>{activePlanMeta?.name}</strong>, {yearly ? "Yearly" : "Monthly"}) and we'll share PayPal / bank transfer details for {region.symbol}{activePrice}.
             </div>
           )}
 
           <Button className="w-full mt-2" onClick={() => setBuyOpen(false)}>
             Got it
           </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Top-up packs */}
+      <Dialog open={topupOpen} onOpenChange={setTopupOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Top-up token packs</DialogTitle>
+            <DialogDescription>
+              One-time packs · stack on any plan · tokens never expire
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {topupPresets.map((p) => (
+              <Card
+                key={p.tokens}
+                className="p-4 flex items-center justify-between hover:border-accent transition-colors"
+              >
+                <div>
+                  <p className="font-semibold">{p.tokens.toLocaleString()} tokens</p>
+                  <p className="text-xs text-muted-foreground">
+                    {region.symbol}
+                    {(p.price / p.tokens).toFixed(2)} / token
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-accent">
+                    {region.symbol}
+                    {p.price}
+                  </p>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            Pay via UPI to <span className="font-mono">{UPI_ID}</span> and email
+            UTR + pack to{" "}
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="text-accent underline">
+              {SUPPORT_EMAIL}
+            </a>
+            .
+          </p>
         </DialogContent>
       </Dialog>
     </div>
