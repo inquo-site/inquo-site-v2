@@ -5,7 +5,7 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://inquo.site/sitemap.xml
+Sitemap: https://inquo-site.lovable.app/sitemap.xml
 
 # Disallow admin and auth pages from indexing
 Disallow: /admin
