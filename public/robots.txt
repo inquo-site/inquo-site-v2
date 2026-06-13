@@ -1,5 +1,5 @@
 # Robots.txt for InQuo.site
-# https://inquo.site
+# https://inquo-site.lovable.app
 
 User-agent: *
 Allow: /
