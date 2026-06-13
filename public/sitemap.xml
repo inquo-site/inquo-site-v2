@@ -1,167 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-  
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Main Pages -->
-  <url>
-    <loc>https://inquo.site/</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/dashboard</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/pricing</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/blog</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/about</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/contact</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/auth</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/privacy</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.4</priority>
-  </url>
-  
+  <url><loc>https://inquo-site.lovable.app/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://inquo-site.lovable.app/dashboard</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://inquo-site.lovable.app/pricing</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/about</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/contact</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/auth</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://inquo-site.lovable.app/privacy</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://inquo-site.lovable.app/projects</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agents</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+
   <!-- Tool Categories -->
-  <url>
-    <loc>https://inquo.site/dashboard?category=writing</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/dashboard?category=design</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/dashboard?category=coding</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/dashboard?category=marketing</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <!-- Static Tool Pages -->
-  <url>
-    <loc>https://inquo.site/tools/chat-ai</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/tools/image-generator</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/tools/code-generator</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/tools/blog-generator</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/tools/text-summarizer</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/tools/grammar-fixer</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <url>
-    <loc>https://inquo.site/tools/ad-copy-writer</loc>
-    <lastmod>2026-01-04</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <url><loc>https://inquo-site.lovable.app/dashboard?category=writing</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/dashboard?category=design</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/dashboard?category=coding</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/dashboard?category=marketing</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
 
-  <!-- Agents -->
-  <url>
-    <loc>https://inquo.site/agents</loc>
-    <lastmod>2026-05-03</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
+  <!-- Tool pages -->
+  <url><loc>https://inquo-site.lovable.app/tools/chat-ai</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tools/image-generator</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tools/code-generator</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tools/blog-generator</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tools/text-summarizer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tools/grammar-fixer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tools/ad-copy-writer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tool/chat</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tool/image</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tool/code</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tool/blog</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tool/grammar</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tool/summarizer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/tool/ad-copy</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
 
-  <url>
-    <loc>https://inquo.site/projects</loc>
-    <lastmod>2026-05-03</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
+  <!-- Agent chat pages (one per active agent) -->
+  <url><loc>https://inquo-site.lovable.app/agent/f126f596-942b-476d-bc9c-7ba0939fb049</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/d9a81fcf-27d9-44ae-a5ca-7670e669c967</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/9b47ea57-8c94-49d5-9926-36e5d201f19f</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/c80739ad-0f81-497d-9399-bd313a858cb3</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/18f8ad2a-4d1e-45ee-a6e0-6d86c76e2693</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/b2791383-a9b3-402a-b6b2-cb1367905361</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/76f4c142-b6b7-459a-90d7-785079099723</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/882d50c8-805e-4f9d-bfeb-0a0db0ed4571</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/023b8d1b-2863-42e6-a556-9dd543d45341</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/c8c91b12-eb0e-49a8-a966-3d49603ab303</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/610e5d76-9442-4a7b-aed9-3b2bdbeb5ae7</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/agent/cba9099c-d5bf-4777-836d-889b0b8a5e16</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
 
-  <!-- Canonical /tool/:slug routes -->
-  <url><loc>https://inquo.site/tool/chat</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://inquo.site/tool/image</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://inquo.site/tool/code</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://inquo.site/tool/blog</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
-  <url><loc>https://inquo.site/tool/grammar</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://inquo.site/tool/summarizer</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-  <url><loc>https://inquo.site/tool/ad-copy</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
-
+  <!-- Blog posts (one per published post) -->
+  <url><loc>https://inquo-site.lovable.app/blog/get-160-ai-tools-in-one-website-inquo-site</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/samsung-galaxy-introduces-a-new-privacy-layer-to-block-shoulder-surfing-how-it-works-and-why-it-matters</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/ai-in-factory</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/ai-in-factory-1</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/iit-tirupati-introduces-interdisciplinary-dual-degree-in-data-science</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/ai-agents-vs-agentic-ai-what-s-the-difference-and-why-it-matters</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/best-ai-tools-for-seo-optimization-blogging-2026-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/how-agentic-ai-is-redefining-work-in-2025</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/nemotron-3-how-nvidia-is-turning-open-models-into-an-enterprise-ai-advantage</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/the-ai-revolution-more-than-just-robots-it-s-a-new-era</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://inquo-site.lovable.app/blog/3-5k-pursue-iit-madras-online-courses-as-2nd-degree</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
 </urlset>
