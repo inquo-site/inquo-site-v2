@@ -452,7 +452,7 @@ const Auth = () => {
           </button>
         </div>
       </Card>
-    </div>
+    </AuthStage>
   );
 };
 
