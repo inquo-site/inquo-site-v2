@@ -287,7 +287,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+    <AuthStage>
       <SEOHead
         title={isLogin ? "Sign In" : "Create Account"}
         description={isLogin ? "Sign in to Inquo.Site to access 160+ AI tools and AI agents." : "Create a free Inquo.Site account and unlock 160+ AI tools, agents, and credits."}
