@@ -238,7 +238,7 @@ const Auth = () => {
 
   if (isForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <AuthStage>
         <Card className="glass-card w-full max-w-md p-8">
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
