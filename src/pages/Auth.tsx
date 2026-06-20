@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Mail, Phone } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { SEOHead } from "@/components/SEOHead";
+import { AuthStage } from "@/components/AuthStage";
 import { z } from "zod";
 
 const emailSchema = z.object({
@@ -237,7 +238,7 @@ const Auth = () => {
 
   if (isForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <AuthStage>
         <Card className="glass-card w-full max-w-md p-8">
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-4">
@@ -281,12 +282,12 @@ const Auth = () => {
             </button>
           </div>
         </Card>
-      </div>
+      </AuthStage>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+    <AuthStage>
       <SEOHead
         title={isLogin ? "Sign In" : "Create Account"}
         description={isLogin ? "Sign in to Inquo.Site to access 160+ AI tools and AI agents." : "Create a free Inquo.Site account and unlock 160+ AI tools, agents, and credits."}
@@ -451,7 +452,7 @@ const Auth = () => {
           </button>
         </div>
       </Card>
-    </div>
+    </AuthStage>
   );
 };
 

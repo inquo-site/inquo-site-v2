@@ -480,3 +480,37 @@ All colors MUST be HSL.
     font-family: monospace;
   }
 }
+
+/* === Auth page entrance animations === */
+@keyframes auth-character-drop {
+  0%   { transform: translateY(-110vh) scale(0.82, 1.22); opacity: 0; }
+  55%  { transform: translateY(18px)   scale(1.08, 0.9);  opacity: 1; }
+  72%  { transform: translateY(-12px)  scale(0.96, 1.05); }
+  88%  { transform: translateY(6px)    scale(1.02, 0.98); }
+  100% { transform: translateY(0)      scale(1, 1); }
+}
+@keyframes auth-shadow-squash {
+  0%   { transform: translateX(-50%) scaleX(0.15); opacity: 0; }
+  55%  { transform: translateX(-50%) scaleX(1.25); opacity: 0.55; }
+  100% { transform: translateX(-50%) scaleX(1);    opacity: 0.35; }
+}
+@keyframes auth-glow-pulse {
+  0%, 100% { opacity: 0.35; filter: blur(60px); }
+  50%      { opacity: 0.65; filter: blur(90px); }
+}
+@keyframes auth-ambient-float {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(-12px, -22px); }
+}
+@keyframes auth-spark-up {
+  0%   { transform: translate(var(--sx,0), 20px) scale(0); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(var(--sx,0), -120px) scale(1); opacity: 0; }
+}
+
+.auth-drop      { animation: auth-character-drop 0.95s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.auth-shadow    { animation: auth-shadow-squash 0.95s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.auth-glow      { animation: auth-glow-pulse 5s ease-in-out infinite; }
+.auth-glow.delay { animation-delay: 1.2s; }
+.auth-float     { animation: auth-ambient-float 9s ease-in-out infinite; }
+.auth-spark     { animation: auth-spark-up 1.4s ease-out both; }
