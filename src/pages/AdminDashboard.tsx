@@ -16,6 +16,7 @@ import { PromoCodeManagement } from "./admin/PromoCodeManagement";
 import { BannerManagement } from "./admin/BannerManagement";
 import { AgentSubscriptionManagement } from "./admin/AgentSubscriptionManagement";
 import CustomAdManagement from "./admin/CustomAdManagement";
+import AICompany from "./admin/AICompany";
 
 interface DashboardStats {
   totalUsers: number;
