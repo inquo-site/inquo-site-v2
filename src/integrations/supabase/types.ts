@@ -297,6 +297,48 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_ads: {
+        Row: {
+          background_gradient: string | null
+          created_at: string
+          cta_link: string
+          cta_text: string
+          description: string | null
+          display_order: number
+          id: string
+          image_url: string | null
+          is_active: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          background_gradient?: string | null
+          created_at?: string
+          cta_link?: string
+          cta_text?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          background_gradient?: string | null
+          created_at?: string
+          cta_link?: string
+          cta_text?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           admin_notes: string | null
