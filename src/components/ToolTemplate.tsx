@@ -11,6 +11,8 @@ import { Copy, Download, RefreshCw, Sparkles, Lock, ArrowLeft, ArrowRight, Zap, 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SEOHead } from "@/components/SEOHead";
+import { getToolSeo } from "@/data/toolSeo";
+import { ToolSeoSections } from "@/components/ToolSeoSections";
 interface ToolTemplateProps {
   title: string;
   description: string;
