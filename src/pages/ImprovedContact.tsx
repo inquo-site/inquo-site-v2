@@ -41,9 +41,14 @@ export default function ImprovedContact() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Contact InQuo — Talk to our team"
+        description="Get in touch with InQuo.Site. Questions about plans, support, partnerships or feedback — we reply within 24 hours."
+        canonicalUrl="https://inquo-site.lovable.app/contact"
+      />
       <Navbar />
-      
-      <div className="pt-24 pb-20 px-4">
+
+      <main className="pt-24 pb-20 px-4">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="text-center mb-16 animate-fade-in">
