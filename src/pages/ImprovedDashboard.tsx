@@ -17,6 +17,45 @@ import { NSCta } from "@/components/ns/NSCta";
 import { Reveal } from "@/components/ns/Reveal";
 import { NSBackdrop } from "@/components/ns/NSBackdrop";
 import { cn } from "@/lib/utils";
+import { getToolSeo } from "@/data/toolSeo";
+
+// Score a tool against the user's query. Higher = more relevant.
+// Exact-name match dominates so "code editor" → Code Editor ranks #1.
+function scoreToolForQuery(tool: Tool, rawQuery: string): number {
+  const q = rawQuery.trim().toLowerCase();
+  if (!q) return 0;
+  const name = (tool.name || "").toLowerCase();
+  const desc = (tool.description || "").toLowerCase();
+  const type = (tool.tool_type || "").toLowerCase();
+  const seo = getToolSeo(tool.tool_type || tool.name, tool.name, tool.description || "");
+  const keywords = (seo.keywords || "").toLowerCase();
+  const tagline = (seo.tagline || "").toLowerCase();
+
+  let score = 0;
+  if (name === q) score += 1000;
+  if (type === q || type.replace(/-/g, " ") === q) score += 900;
+  if (name.startsWith(q)) score += 400;
+  if (name.includes(q)) score += 250;
+
+  // Token-level keyword matching (top SEO keywords)
+  const keywordList = keywords.split(",").map((k) => k.trim()).filter(Boolean);
+  keywordList.forEach((kw, idx) => {
+    const weight = Math.max(120 - idx * 8, 20); // earlier keywords weigh more
+    if (kw === q) score += weight + 200;
+    else if (kw.includes(q) || q.includes(kw)) score += weight;
+  });
+
+  // Per-word matching for multi-word queries
+  const words = q.split(/\s+/).filter((w) => w.length > 1);
+  words.forEach((w) => {
+    if (name.includes(w)) score += 60;
+    if (keywords.includes(w)) score += 30;
+    if (tagline.includes(w)) score += 15;
+    if (desc.includes(w)) score += 10;
+  });
+
+  return score;
+}
 
 interface Tool {
   id: string;
@@ -90,12 +129,19 @@ export default function ImprovedDashboard() {
     Wrench, DollarSign, Pen, BarChart, Package
   };
 
-  const filteredTools = tools.filter(tool => {
-    const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         tool.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || tool.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredTools = (() => {
+    const q = searchQuery.trim();
+    const base = tools.filter((tool) => {
+      const matchesCategory = selectedCategory === "all" || tool.category === selectedCategory;
+      if (!matchesCategory) return false;
+      if (!q) return true;
+      return scoreToolForQuery(tool, q) > 0;
+    });
+    if (q) {
+      base.sort((a, b) => scoreToolForQuery(b, q) - scoreToolForQuery(a, q));
+    }
+    return base;
+  })();
 
   const uniqueTools = filteredTools.filter((tool, index, self) =>
     index === self.findIndex((t) => t.name === tool.name)
