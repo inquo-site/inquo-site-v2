@@ -193,18 +193,43 @@ Rules:
                 </div>
                 <div><Label>Current Tagline / Bio</Label><Input value={form.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="Aspiring SWE | building AI products" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Location</Label><Input value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="Purnea, Bihar" /></div>
-                  <div><Label>Current Role</Label><Input value={form.currentRole} onChange={(e) => set("currentRole", e.target.value)} placeholder="Frontend Developer" /></div>
+                  <div><Label>Current City</Label><Input value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="Bengaluru, India" /></div>
+                  <div><Label>Hometown</Label><Input value={form.hometown} onChange={(e) => set("hometown", e.target.value)} placeholder="Purnea, Bihar" /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Current Role</Label><Input value={form.currentRole} onChange={(e) => set("currentRole", e.target.value)} placeholder="Frontend Developer" /></div>
                   <div><Label>Company</Label><Input value={form.company} onChange={(e) => set("company", e.target.value)} placeholder="Inquo.site" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label>Industry</Label><Input value={form.industry} onChange={(e) => set("industry", e.target.value)} placeholder="SaaS / AI" /></div>
+                  <div><Label>Years of Experience</Label><Input value={form.yearsExperience} onChange={(e) => set("yearsExperience", e.target.value)} placeholder="3" /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div><Label>College / University</Label><Input value={form.college} onChange={(e) => set("college", e.target.value)} placeholder="IIT Delhi" /></div>
+                  <div><Label>Graduation Year</Label><Input value={form.graduationYear} onChange={(e) => set("graduationYear", e.target.value)} placeholder="2025" /></div>
                 </div>
                 <div><Label>Degree</Label><Input value={form.degree} onChange={(e) => set("degree", e.target.value)} placeholder="B.Tech Computer Science" /></div>
                 <div><Label>Skills * (comma-separated)</Label><Textarea rows={2} value={form.skills} onChange={(e) => set("skills", e.target.value)} placeholder="React, TypeScript, Node.js, Supabase, AI..." /></div>
+                <div><Label>Languages</Label><Input value={form.languages} onChange={(e) => set("languages", e.target.value)} placeholder="English, Hindi, Bhojpuri" /></div>
                 <div><Label>Experience Summary</Label><Textarea rows={3} value={form.experience} onChange={(e) => set("experience", e.target.value)} placeholder="2 yrs building SaaS products, shipped 10+ tools..." /></div>
                 <div><Label>Achievements / Awards</Label><Textarea rows={2} value={form.achievements} onChange={(e) => set("achievements", e.target.value)} placeholder="Hackathon winner, Top 1% on Kaggle..." /></div>
-                <div><Label>Portfolio / Links</Label><Input value={form.portfolio} onChange={(e) => set("portfolio", e.target.value)} placeholder="github.com/you, your-site.com" /></div>
+                <div><Label>Certifications</Label><Textarea rows={2} value={form.certifications} onChange={(e) => set("certifications", e.target.value)} placeholder="AWS Certified, Google Data Analytics..." /></div>
+
+                <div className="pt-2 border-t">
+                  <p className="text-sm font-semibold mb-2 text-accent">Links & Socials</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label>Personal Website</Label><Input value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="https://you.com" /></div>
+                    <div><Label>Portfolio</Label><Input value={form.portfolio} onChange={(e) => set("portfolio", e.target.value)} placeholder="behance.net/you" /></div>
+                    <div><Label>GitHub</Label><Input value={form.github} onChange={(e) => set("github", e.target.value)} placeholder="github.com/you" /></div>
+                    <div><Label>Twitter / X</Label><Input value={form.twitter} onChange={(e) => set("twitter", e.target.value)} placeholder="x.com/you" /></div>
+                    <div><Label>Email</Label><Input value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="you@email.com" /></div>
+                    <div><Label>Phone (optional)</Label><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+91..." /></div>
+                  </div>
+                </div>
+
+                <div><Label>Hobbies / Interests</Label><Input value={form.hobbies} onChange={(e) => set("hobbies", e.target.value)} placeholder="Photography, chess, open-source" /></div>
+                <div><Label>Volunteer Work</Label><Input value={form.volunteer} onChange={(e) => set("volunteer", e.target.value)} placeholder="Code mentor at CodeForCause" /></div>
+                <div><Label>Open To</Label><Input value={form.openTo} onChange={(e) => set("openTo", e.target.value)} /></div>
                 <div><Label>Goals</Label><Input value={form.goals} onChange={(e) => set("goals", e.target.value)} placeholder="Land a senior SWE role at a product company" /></div>
                 <div><Label>Tone</Label><Input value={form.tone} onChange={(e) => set("tone", e.target.value)} /></div>
 
