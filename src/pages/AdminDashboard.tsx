@@ -15,6 +15,7 @@ import { PaymentManagement } from "./admin/PaymentManagement";
 import { PromoCodeManagement } from "./admin/PromoCodeManagement";
 import { BannerManagement } from "./admin/BannerManagement";
 import { AgentSubscriptionManagement } from "./admin/AgentSubscriptionManagement";
+import CustomAdManagement from "./admin/CustomAdManagement";
 
 interface DashboardStats {
   totalUsers: number;
@@ -164,13 +165,14 @@ const AdminDashboard = () => {
 
         {/* Tabs for Management Sections */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-9">
+          <TabsList className="grid w-full grid-cols-10">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="promos">Promos</TabsTrigger>
             <TabsTrigger value="banners">Banners</TabsTrigger>
+            <TabsTrigger value="ads">Ads</TabsTrigger>
             <TabsTrigger value="tools">Tools</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -222,6 +224,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="banners">
             <BannerManagement />
+          </TabsContent>
+
+          <TabsContent value="ads">
+            <CustomAdManagement />
           </TabsContent>
 
           <TabsContent value="tools">

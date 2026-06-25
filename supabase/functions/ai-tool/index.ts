@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Free tools that don't require authentication
-const FREE_TOOLS = ['blog', 'code', 'grammar', 'adcopy', 'summarize', 'chat', 'notes', 'essay', 'email', 'social', 'product', 'story', 'hashtags', 'paraphrase', 'copywriting', 'agent-chat'];
+const FREE_TOOLS = ['blog', 'code', 'grammar', 'adcopy', 'summarize', 'chat', 'notes', 'essay', 'email', 'social', 'product', 'story', 'hashtags', 'paraphrase', 'copywriting', 'agent-chat', 'linkedin'];
 
 const TOOL_PROMPTS: Record<string, string> = {
   blog: "You are an expert blog writer. Create a well-structured, engaging blog post based on the user's topic. Include an introduction, main points with explanations, and a conclusion. Make it SEO-friendly and easy to read.",
@@ -39,6 +39,7 @@ const TOOL_PROMPTS: Record<string, string> = {
   color: "You are a color palette expert. Generate beautiful, harmonious color palettes based on the user's requirements. Provide hex codes, RGB values, and usage suggestions.",
   logo: "You are a logo design consultant. Create detailed logo design descriptions and concepts based on the user's brand requirements and preferences.",
   strategy: "You are a marketing strategy expert. Develop comprehensive marketing strategies with clear goals, target audience analysis, channel recommendations, and actionable tactics.",
+  linkedin: "You are a senior LinkedIn personal-brand strategist and recruiter coach. Generate recruiter-magnet profile content. Follow the user's exact section structure (## Headline, ## About, ## Featured Skills, ## Experience Highlights, ## Education, ## Recommended Keywords, ## 3 Engagement Post Ideas). Use first-person voice, action verbs, measurable impact, and keyword-rich phrasing for LinkedIn search. Keep the headline under 220 characters. Be concise, confident, and specific — no fluff or buzzword salad.",
 };
 
 // ============================================================
