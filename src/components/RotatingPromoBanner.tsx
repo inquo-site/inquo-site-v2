@@ -15,9 +15,9 @@ interface Slide {
   html_code?: string | null;
 }
 
-const ROTATE_MS = 30_000;
-const DISMISS_KEY = "promo_banner_dismissed_at";
-const DISMISS_HOURS = 12;
+const ROTATE_MS = 45_000;          // each slide stays ~45s so user actually sees it
+const DISMISS_KEY = "promo_banner_min_at";
+const DISMISS_MIN = 30;            // minimize for 30 minutes, not 12 hours — ads must keep showing
 
 const gradients = [
   "from-[#0A66C2] via-[#1e40af] to-[#7c3aed]",
