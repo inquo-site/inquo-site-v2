@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { X, Sparkles, ArrowRight, Zap } from "lucide-react";
+import { X, Sparkles, ArrowRight, Zap, Megaphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Slide {
@@ -15,9 +15,9 @@ interface Slide {
   html_code?: string | null;
 }
 
-const ROTATE_MS = 30_000;
-const DISMISS_KEY = "promo_banner_dismissed_at";
-const DISMISS_HOURS = 12;
+const ROTATE_MS = 45_000;          // each slide stays ~45s so user actually sees it
+const DISMISS_KEY = "promo_banner_min_at";
+const DISMISS_MIN = 30;            // minimize for 30 minutes, not 12 hours — ads must keep showing
 
 const gradients = [
   "from-[#0A66C2] via-[#1e40af] to-[#7c3aed]",
@@ -33,15 +33,15 @@ export default function RotatingPromoBanner() {
   const location = useLocation();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [idx, setIdx] = useState(0);
-  const [closed, setClosed] = useState(true);
+  const [minimized, setMinimized] = useState(true);
   const [bursting, setBursting] = useState(false);
   const [entering, setEntering] = useState(true);
 
   useEffect(() => {
     const at = localStorage.getItem(DISMISS_KEY);
-    if (!at) { setClosed(false); return; }
-    const hoursPassed = (Date.now() - Number(at)) / 36e5;
-    setClosed(hoursPassed < DISMISS_HOURS);
+    if (!at) { setMinimized(false); return; }
+    const minsPassed = (Date.now() - Number(at)) / 60_000;
+    setMinimized(minsPassed < DISMISS_MIN);
   }, []);
 
   useEffect(() => {
@@ -78,8 +78,10 @@ export default function RotatingPromoBanner() {
         html_code: a.html_code || null,
       }));
 
-      const all = [...adSlides, ...toolSlides].sort(() => Math.random() - 0.5);
-      setSlides(all);
+      // Admin-created ads stay first (in order) so they're guaranteed to show;
+      // tool slides shuffle behind them.
+      toolSlides.sort(() => Math.random() - 0.5);
+      setSlides([...adSlides, ...toolSlides]);
     })();
   }, []);
 
@@ -106,15 +108,41 @@ export default function RotatingPromoBanner() {
   const slide = useMemo(() => slides[idx], [slides, idx]);
   const hideRoute = HIDE_ON.some((p) => location.pathname.startsWith(p));
 
-  if (closed || !slide || hideRoute) return null;
+  if (!slide || hideRoute) return null;
 
   const dismiss = () => {
     setBursting(true);
     setTimeout(() => {
       localStorage.setItem(DISMISS_KEY, String(Date.now()));
-      setClosed(true);
+      setMinimized(true);
+      setBursting(false);
     }, 450);
   };
+
+  const reopen = () => {
+    localStorage.removeItem(DISMISS_KEY);
+    setMinimized(false);
+    setEntering(true);
+    setTimeout(() => setEntering(false), 700);
+  };
+
+  // Minimized state: small persistent pill in the corner so the ad never fully disappears
+  if (minimized) {
+    return (
+      <button
+        onClick={reopen}
+        aria-label="Show promotional banner"
+        className="fixed bottom-4 right-4 z-[60] group flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-2xl border border-white/20 hover:scale-105 transition"
+      >
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="absolute inset-0 rounded-full bg-white/60 animate-ping" />
+          <span className="relative rounded-full bg-white h-2.5 w-2.5" />
+        </span>
+        <Megaphone className="w-4 h-4" />
+        <span className="text-xs font-semibold tracking-wide">Today's pick</span>
+      </button>
+    );
+  }
 
   return (
     <>
