@@ -108,6 +108,7 @@ export default function ImprovedBlog() {
                 <Input
                   type="text"
                   placeholder="Search articles..."
+                  aria-label="Search articles"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-12 h-12 rounded-full"
