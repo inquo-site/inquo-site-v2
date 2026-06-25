@@ -11,6 +11,8 @@ import { Copy, Download, RefreshCw, Sparkles, Lock, ArrowLeft, ArrowRight, Zap, 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SEOHead } from "@/components/SEOHead";
+import { getToolSeo } from "@/data/toolSeo";
+import { ToolSeoSections } from "@/components/ToolSeoSections";
 interface ToolTemplateProps {
   title: string;
   description: string;
@@ -247,44 +249,68 @@ const ToolTemplate = ({ title, description, placeholder, toolType, isFree = true
 
   return (
     <>
-      <SEOHead
-        title={`${title} - Free AI Tool`}
-        description={`${description} Use our free ${title} tool powered by AI. No login required.`}
-        keywords={`${title.toLowerCase()}, AI ${toolType}, free AI tool, ${toolType} generator, online ${toolType} tool, Inquo.site`}
-        canonicalUrl={`https://inquo.site/tool/${toolType}`}
-        schema={{
-          "@context": "https://schema.org",
-          "@graph": [
-            {
-              "@type": "SoftwareApplication",
-              name: title,
-              applicationCategory: "ProductivityApplication",
-              operatingSystem: "Web",
-              description: description,
-              url: `https://inquo.site/tool/${toolType}`,
-              offers: {
-                "@type": "Offer",
-                price: isFree ? "0" : "4.99",
-                priceCurrency: "USD",
-              },
-              aggregateRating: {
-                "@type": "AggregateRating",
-                ratingValue: "4.8",
-                ratingCount: "1200",
-              },
-            },
-            {
-              "@type": "BreadcrumbList",
-              itemListElement: [
-                { "@type": "ListItem", position: 1, name: "Home", item: "https://inquo.site/" },
-                { "@type": "ListItem", position: 2, name: "Tools", item: "https://inquo.site/dashboard" },
-                { "@type": "ListItem", position: 3, name: title, item: `https://inquo.site/tool/${toolType}` },
+      {(() => {
+        const seo = getToolSeo(toolType, title, description);
+        const canonical = `https://inquo.site/tool/${toolType}`;
+        return (
+          <SEOHead
+            title={seo.title}
+            description={seo.description}
+            keywords={seo.keywords}
+            canonicalUrl={canonical}
+            schema={{
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "SoftwareApplication",
+                  name: title,
+                  applicationCategory: "ProductivityApplication",
+                  operatingSystem: "Web",
+                  description: seo.description,
+                  url: canonical,
+                  offers: {
+                    "@type": "Offer",
+                    price: isFree ? "0" : "4.99",
+                    priceCurrency: "USD",
+                  },
+                  aggregateRating: {
+                    "@type": "AggregateRating",
+                    ratingValue: "4.8",
+                    ratingCount: "1200",
+                  },
+                },
+                {
+                  "@type": "BreadcrumbList",
+                  itemListElement: [
+                    { "@type": "ListItem", position: 1, name: "Home", item: "https://inquo.site/" },
+                    { "@type": "ListItem", position: 2, name: "Tools", item: "https://inquo.site/dashboard" },
+                    { "@type": "ListItem", position: 3, name: title, item: canonical },
+                  ],
+                },
+                {
+                  "@type": "FAQPage",
+                  mainEntity: seo.faqs.map((f) => ({
+                    "@type": "Question",
+                    name: f.q,
+                    acceptedAnswer: { "@type": "Answer", text: f.a },
+                  })),
+                },
+                {
+                  "@type": "HowTo",
+                  name: `How to use ${title}`,
+                  step: seo.howTo.map((s, i) => ({
+                    "@type": "HowToStep",
+                    position: i + 1,
+                    name: s.name,
+                    text: s.text,
+                  })),
+                },
               ],
-            },
-          ],
-        }}
-      />
-      <div className="min-h-screen p-6">
+            }}
+          />
+        );
+      })()}
+      <main className="min-h-screen p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
             <Button asChild variant="ghost" size="sm" className="mb-4">
@@ -515,9 +541,13 @@ const ToolTemplate = ({ title, description, placeholder, toolType, isFree = true
               </Link>
             </Button>
           </section>
+
+          {/* Visible long-form SEO content */}
+          <ToolSeoSections seo={getToolSeo(toolType, title, description)} toolName={title} />
         </div>
-      </div>
+      </main>
     </>
+
   );
 };
 
