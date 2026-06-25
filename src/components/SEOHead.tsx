@@ -26,8 +26,14 @@ export const SEOHead = ({
   article,
   schema,
 }: SEOHeadProps) => {
-  const fullTitle = `${title} | Inquo.Site - AI Tools Platform`;
-  const baseUrl = "https://inquo.site";
+  // Keep titles under the 60-char SERP cutoff: only append the brand suffix
+  // when the page-supplied title doesn't already include it, and when there's
+  // room for it.
+  const SUFFIX = " | InQuo";
+  const hasBrand = /inquo/i.test(title);
+  const fullTitle =
+    hasBrand || title.length + SUFFIX.length > 60 ? title : `${title}${SUFFIX}`;
+  const baseUrl = "https://inquo-site.lovable.app";
   const canonical = canonicalUrl || baseUrl;
 
   // Default website schema
