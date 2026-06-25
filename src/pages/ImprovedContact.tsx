@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { SEOHead } from "@/components/SEOHead";
 import { Mail, MessageSquare, Send } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
