@@ -166,8 +166,9 @@ const AdminDashboard = () => {
 
         {/* Tabs for Management Sections */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="company" className="text-amber-400">AI Company</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
