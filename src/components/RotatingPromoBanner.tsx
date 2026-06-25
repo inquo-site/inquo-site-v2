@@ -144,6 +144,7 @@ export default function RotatingPromoBanner() {
     );
   }
 
+  return (
     <>
       {/* Inline keyframes — scoped */}
       <style>{`
