@@ -16,6 +16,7 @@ import { PromoCodeManagement } from "./admin/PromoCodeManagement";
 import { BannerManagement } from "./admin/BannerManagement";
 import { AgentSubscriptionManagement } from "./admin/AgentSubscriptionManagement";
 import CustomAdManagement from "./admin/CustomAdManagement";
+import AICompany from "./admin/AICompany";
 
 interface DashboardStats {
   totalUsers: number;
@@ -165,8 +166,9 @@ const AdminDashboard = () => {
 
         {/* Tabs for Management Sections */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-10">
+          <TabsList className="grid w-full grid-cols-11">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="company" className="text-amber-400">AI Company</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
@@ -204,6 +206,10 @@ const AdminDashboard = () => {
                 </p>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="company">
+            <AICompany />
           </TabsContent>
 
           <TabsContent value="users">
