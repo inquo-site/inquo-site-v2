@@ -17,6 +17,7 @@ import Privacy from "./pages/Privacy";
 import DynamicTool from "./pages/tools/DynamicTool";
 import ImageGenerator from "./pages/tools/ImageGenerator";
 import LinkedInOptimizer from "./pages/tools/LinkedInOptimizer";
+import LinkedInPostOptimizer from "./pages/tools/LinkedInPostOptimizer";
 import NotFound from "./pages/NotFound";
 import RotatingPromoBanner from "./components/RotatingPromoBanner";
 import Blog from "./pages/ImprovedBlog";
