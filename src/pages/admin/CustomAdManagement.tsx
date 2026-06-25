@@ -19,6 +19,7 @@ interface CustomAd {
   background_gradient: string | null;
   is_active: boolean;
   display_order: number;
+  html_code?: string | null;
 }
 
 const blank = {
@@ -29,7 +30,15 @@ const blank = {
   background_gradient: "from-primary to-accent",
   is_active: true,
   display_order: 0,
+  html_code: "",
 };
+
+const HTML_TEMPLATE = `<div style="padding:24px;background:linear-gradient(135deg,#0A66C2,#7c3aed);color:#fff;font-family:system-ui">
+  <div style="font-size:11px;letter-spacing:.2em;opacity:.8">🔥 LIMITED OFFER</div>
+  <h3 style="margin:6px 0;font-size:22px;font-weight:800">Your Custom Headline</h3>
+  <p style="margin:0 0 12px;font-size:14px;opacity:.9">Describe the offer in one sharp line.</p>
+  <a href="/pricing" style="display:inline-block;padding:8px 16px;background:#fff;color:#000;font-weight:700;border-radius:999px;text-decoration:none">Grab Deal →</a>
+</div>`;
 
 export default function CustomAdManagement() {
   const [ads, setAds] = useState<CustomAd[]>([]);
