@@ -1,6 +1,7 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
+import { SEOHead } from "@/components/SEOHead";
 import { Target, Eye, Users, Rocket, Heart, Zap, Linkedin, Twitter, Mail, Sparkles } from "lucide-react";
 
 export default function ImprovedAbout() {
