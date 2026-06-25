@@ -541,9 +541,13 @@ const ToolTemplate = ({ title, description, placeholder, toolType, isFree = true
               </Link>
             </Button>
           </section>
+
+          {/* Visible long-form SEO content */}
+          <ToolSeoSections seo={getToolSeo(toolType, title, description)} toolName={title} />
         </div>
-      </div>
+      </main>
     </>
+
   );
 };
 
