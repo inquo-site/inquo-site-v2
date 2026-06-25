@@ -564,6 +564,7 @@ export default function NewLanding() {
 
       {/* Internal Linking Section */}
       <InternalLinking />
+      </main>
 
       <Footer />
       
