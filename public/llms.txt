@@ -1,0 +1,39 @@
+# InQuo.Site
+
+> 160+ AI-powered productivity tools and autonomous agents for content, code, design and marketing — all in one platform with simple token-based pricing.
+
+InQuo.Site bundles chat, image, code, writing, SEO, marketing and automation tools, plus configurable autonomous AI agents, behind a single login. Free tier available — no card required.
+
+## Pages
+
+- [Home](/): Overview of the platform, featured tools and agents.
+- [Dashboard](/dashboard): Browse and launch all 160+ AI tools.
+- [Agents](/agents): Autonomous AI agents you can chat with and assign multi-step tasks.
+- [Pricing](/pricing): Plans, token packs and FAQs.
+- [About](/about): Mission, story and the team behind InQuo.
+- [Contact](/contact): Reach support, partnerships and feedback.
+- [Blog](/blog): Guides on AI tools, workflows and industry news.
+- [Privacy](/privacy): Privacy policy.
+
+## Tools
+
+- [AI Chat](/tool/chat): General-purpose AI chat assistant.
+- [Image Generator](/tool/image): Text-to-image generation.
+- [Code Generator](/tool/code): Generate, refactor and explain code.
+- [Blog Writer](/tool/blog): Long-form blog post generator.
+- [Text Summarizer](/tool/summarizer): Summarize long documents.
+- [Grammar Fixer](/tool/grammar): Proofread and improve writing.
+- [Ad Copy Writer](/tool/ad-copy): High-converting ad copy.
+- [LinkedIn Profile Optimizer](/tool/linkedin): Optimize your LinkedIn profile.
+- [LinkedIn Post Optimizer](/tool/linkedin-post): Generate viral LinkedIn posts.
+
+## Featured blog posts
+
+- [Best AI Workflow Automation Tools and Agents](/blog/best-ai-workflow-automation-tools): Comparative guide to AI workflow automation in 2026.
+- [AI Agents vs Agentic AI](/blog/ai-agents-vs-agentic-ai-what-s-the-difference-and-why-it-matters): Difference between AI agents and agentic AI.
+- [How Agentic AI is Redefining Work in 2025](/blog/how-agentic-ai-is-redefining-work-in-2025): Where agentic AI is heading.
+- [Best AI Tools for SEO & Blogging — 2026 Guide](/blog/best-ai-tools-for-seo-optimization-blogging-2026-guide): SEO tooling for content creators.
+
+## Optional
+
+- [160+ AI Tools in One Website](/blog/get-160-ai-tools-in-one-website-inquo-site): Platform overview post.

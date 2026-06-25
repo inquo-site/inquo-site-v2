@@ -200,6 +200,7 @@ export default function NewLanding() {
       />
       <Navbar />
 
+      <main>
       {/* Hero — Never Settle inspired */}
       <section className="relative pt-36 pb-28 px-4 overflow-hidden bg-background">
         <NSBackdrop intensity="hero" />
@@ -563,6 +564,7 @@ export default function NewLanding() {
 
       {/* Internal Linking Section */}
       <InternalLinking />
+      </main>
 
       <Footer />
       
