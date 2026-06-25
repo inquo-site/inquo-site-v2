@@ -21,22 +21,40 @@ interface ProfileForm {
   username: string;
   tagline: string;
   location: string;
+  hometown: string;
   currentRole: string;
   company: string;
+  industry: string;
+  yearsExperience: string;
   college: string;
   degree: string;
+  graduationYear: string;
   skills: string;
+  languages: string;
   experience: string;
   achievements: string;
+  certifications: string;
   portfolio: string;
+  website: string;
+  github: string;
+  twitter: string;
+  email: string;
+  phone: string;
+  hobbies: string;
+  volunteer: string;
+  openTo: string;
   goals: string;
   tone: string;
 }
 
 const empty: ProfileForm = {
-  fullName: "", username: "", tagline: "", location: "",
-  currentRole: "", company: "", college: "", degree: "",
-  skills: "", experience: "", achievements: "", portfolio: "",
+  fullName: "", username: "", tagline: "", location: "", hometown: "",
+  currentRole: "", company: "", industry: "", yearsExperience: "",
+  college: "", degree: "", graduationYear: "",
+  skills: "", languages: "", experience: "", achievements: "", certifications: "",
+  portfolio: "", website: "", github: "", twitter: "",
+  email: "", phone: "", hobbies: "", volunteer: "",
+  openTo: "Full-time roles, freelance projects, collaborations",
   goals: "", tone: "Professional & confident",
 };
 
