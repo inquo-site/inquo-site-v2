@@ -43,9 +43,14 @@ export default function ImprovedAbout() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="About InQuo — Our mission, story & team"
+        description="Meet the team behind InQuo.Site: 160+ AI tools in one platform. Learn our mission, vision and the story of why we built it."
+        canonicalUrl="https://inquo-site.lovable.app/about"
+      />
       <Navbar />
-      
-      <div className="pt-24 pb-20 px-4">
+
+      <main className="pt-24 pb-20 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-16 animate-fade-in">
