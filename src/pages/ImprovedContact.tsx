@@ -187,7 +187,7 @@ export default function ImprovedContact() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
 
       <Footer />
     </div>
