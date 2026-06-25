@@ -90,15 +90,29 @@ Profile details:
 - Full name: ${form.fullName}
 - Username/handle: ${form.username || "(suggest one)"}
 - Current tagline: ${form.tagline || "(none yet)"}
-- Location: ${form.location || "Not specified"}
+- Current location: ${form.location || "Not specified"}
+- Hometown: ${form.hometown || "—"}
 - Current role: ${form.currentRole || "Open to opportunities"}
 - Company: ${form.company || "—"}
+- Industry: ${form.industry || "—"}
+- Years of experience: ${form.yearsExperience || "—"}
 - College / University: ${form.college || "—"}
 - Degree: ${form.degree || "—"}
+- Graduation year: ${form.graduationYear || "—"}
 - Skills: ${form.skills}
+- Languages: ${form.languages || "English"}
 - Experience summary: ${form.experience || "—"}
 - Achievements / awards: ${form.achievements || "—"}
-- Portfolio / links: ${form.portfolio || "—"}
+- Certifications: ${form.certifications || "—"}
+- Portfolio: ${form.portfolio || "—"}
+- Personal website: ${form.website || "—"}
+- GitHub: ${form.github || "—"}
+- Twitter/X: ${form.twitter || "—"}
+- Contact email: ${form.email || "—"}
+- Phone: ${form.phone || "—"}
+- Hobbies / interests: ${form.hobbies || "—"}
+- Volunteer work: ${form.volunteer || "—"}
+- Open to: ${form.openTo}
 - Career goals: ${form.goals || "Grow professional network and opportunities"}
 - Desired tone: ${form.tone}
 
