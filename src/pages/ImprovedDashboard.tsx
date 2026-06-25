@@ -129,12 +129,19 @@ export default function ImprovedDashboard() {
     Wrench, DollarSign, Pen, BarChart, Package
   };
 
-  const filteredTools = tools.filter(tool => {
-    const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         tool.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || tool.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredTools = (() => {
+    const q = searchQuery.trim();
+    const base = tools.filter((tool) => {
+      const matchesCategory = selectedCategory === "all" || tool.category === selectedCategory;
+      if (!matchesCategory) return false;
+      if (!q) return true;
+      return scoreToolForQuery(tool, q) > 0;
+    });
+    if (q) {
+      base.sort((a, b) => scoreToolForQuery(b, q) - scoreToolForQuery(a, q));
+    }
+    return base;
+  })();
 
   const uniqueTools = filteredTools.filter((tool, index, self) =>
     index === self.findIndex((t) => t.name === tool.name)
