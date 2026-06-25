@@ -119,13 +119,56 @@ const Pricing = () => {
   const topupPresets =
     region.code === "IN" ? TOPUP_PRESETS_INR : TOPUP_PRESETS_USD;
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: "Can I switch plans later?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Yes — upgrade, downgrade or switch monthly ↔ yearly any time. Yearly billing saves you ${YEARLY_DISCOUNT_PCT}% compared to monthly.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: "How do I pay?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            region.code === "IN"
+              ? "Pay via UPI to our official ID. Share the UTR with support and your plan activates within minutes."
+              : `International payments — email ${SUPPORT_EMAIL} with your chosen plan and we'll share PayPal / bank transfer details.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: "What is the Enterprise plan?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Custom plan with white-label, SSO/SAML, SLA and private deployment for agencies & large organisations. Contact sales for a quote.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Do I need a card to start?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "No. The Free plan is fully usable with zero payment info.",
+        },
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="Pricing — Plans for every stage | InQuo"
+        title="InQuo Pricing — Plans & tokens"
         description={`Simple ${region.label} pricing. Free, Basic, Pro and Business plans. Switch monthly or yearly (save ${YEARLY_DISCOUNT_PCT}%).`}
         keywords="InQuo pricing, AI plans, subscription pricing, AI agents pricing"
-        canonicalUrl="https://inquo.site/pricing"
+        canonicalUrl="https://inquo-site.lovable.app/pricing"
+        schema={faqSchema}
       />
       <PromoPopup />
       <Navbar />
