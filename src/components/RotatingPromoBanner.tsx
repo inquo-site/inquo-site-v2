@@ -33,15 +33,15 @@ export default function RotatingPromoBanner() {
   const location = useLocation();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [idx, setIdx] = useState(0);
-  const [closed, setClosed] = useState(true);
+  const [minimized, setMinimized] = useState(true);
   const [bursting, setBursting] = useState(false);
   const [entering, setEntering] = useState(true);
 
   useEffect(() => {
     const at = localStorage.getItem(DISMISS_KEY);
-    if (!at) { setClosed(false); return; }
-    const hoursPassed = (Date.now() - Number(at)) / 36e5;
-    setClosed(hoursPassed < DISMISS_HOURS);
+    if (!at) { setMinimized(false); return; }
+    const minsPassed = (Date.now() - Number(at)) / 60_000;
+    setMinimized(minsPassed < DISMISS_MIN);
   }, []);
 
   useEffect(() => {
