@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { X, Sparkles, ArrowRight, Zap } from "lucide-react";
+import { X, Sparkles, ArrowRight, Zap, Megaphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Slide {
