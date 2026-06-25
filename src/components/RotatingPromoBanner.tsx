@@ -78,8 +78,10 @@ export default function RotatingPromoBanner() {
         html_code: a.html_code || null,
       }));
 
-      const all = [...adSlides, ...toolSlides].sort(() => Math.random() - 0.5);
-      setSlides(all);
+      // Admin-created ads stay first (in order) so they're guaranteed to show;
+      // tool slides shuffle behind them.
+      toolSlides.sort(() => Math.random() - 0.5);
+      setSlides([...adSlides, ...toolSlides]);
     })();
   }, []);
 
