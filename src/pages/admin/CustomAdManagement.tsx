@@ -19,6 +19,7 @@ interface CustomAd {
   background_gradient: string | null;
   is_active: boolean;
   display_order: number;
+  html_code?: string | null;
 }
 
 const blank = {
@@ -29,7 +30,15 @@ const blank = {
   background_gradient: "from-primary to-accent",
   is_active: true,
   display_order: 0,
+  html_code: "",
 };
+
+const HTML_TEMPLATE = `<div style="padding:24px;background:linear-gradient(135deg,#0A66C2,#7c3aed);color:#fff;font-family:system-ui">
+  <div style="font-size:11px;letter-spacing:.2em;opacity:.8">🔥 LIMITED OFFER</div>
+  <h3 style="margin:6px 0;font-size:22px;font-weight:800">Your Custom Headline</h3>
+  <p style="margin:0 0 12px;font-size:14px;opacity:.9">Describe the offer in one sharp line.</p>
+  <a href="/pricing" style="display:inline-block;padding:8px 16px;background:#fff;color:#000;font-weight:700;border-radius:999px;text-decoration:none">Grab Deal →</a>
+</div>`;
 
 export default function CustomAdManagement() {
   const [ads, setAds] = useState<CustomAd[]>([]);
@@ -86,7 +95,35 @@ export default function CustomAdManagement() {
           <div><Label>Background gradient (Tailwind)</Label><Input value={form.background_gradient} onChange={(e) => setForm({ ...form, background_gradient: e.target.value })} placeholder="from-[#0A66C2] via-[#1e40af] to-[#7c3aed]" /></div>
           <div><Label>Display Order</Label><Input type="number" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: Number(e.target.value) })} /></div>
           <div className="flex items-center gap-2 pt-6"><Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /><Label>Active</Label></div>
+          <div className="flex items-center gap-2 pt-6"><Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} /><Label>Active</Label></div>
         </div>
+
+        {/* Custom HTML editor */}
+        <div className="mt-6 border-t pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <Label className="text-base font-semibold">🎨 Custom HTML / CSS (Pro mode)</Label>
+              <p className="text-xs text-muted-foreground">Paste any HTML — it fully replaces the default card design. Inline CSS only.</p>
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => setForm({ ...form, html_code: HTML_TEMPLATE })}>
+              Insert Template
+            </Button>
+          </div>
+          <Textarea
+            rows={8}
+            className="font-mono text-xs"
+            value={form.html_code || ""}
+            onChange={(e) => setForm({ ...form, html_code: e.target.value })}
+            placeholder="<div>...your custom ad markup...</div>"
+          />
+          {form.html_code && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold mb-1">Live preview:</p>
+              <div className="rounded-lg overflow-hidden border max-w-sm" dangerouslySetInnerHTML={{ __html: form.html_code }} />
+            </div>
+          )}
+        </div>
+
         <Button onClick={create} className="mt-4"><Plus className="w-4 h-4 mr-2" /> Create Ad</Button>
       </Card>
 

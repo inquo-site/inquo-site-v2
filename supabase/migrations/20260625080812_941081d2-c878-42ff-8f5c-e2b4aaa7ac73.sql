@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_ads ADD COLUMN IF NOT EXISTS html_code text;
