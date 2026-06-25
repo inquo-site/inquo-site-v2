@@ -297,6 +297,45 @@ export type Database = {
         }
         Relationships: []
       }
+      company_directives: {
+        Row: {
+          ceo_plan: Json | null
+          created_at: string
+          directive: string
+          error: string | null
+          final_report: string | null
+          id: string
+          status: string
+          team_outputs: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ceo_plan?: Json | null
+          created_at?: string
+          directive: string
+          error?: string | null
+          final_report?: string | null
+          id?: string
+          status?: string
+          team_outputs?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ceo_plan?: Json | null
+          created_at?: string
+          directive?: string
+          error?: string | null
+          final_report?: string | null
+          id?: string
+          status?: string
+          team_outputs?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_ads: {
         Row: {
           background_gradient: string | null
