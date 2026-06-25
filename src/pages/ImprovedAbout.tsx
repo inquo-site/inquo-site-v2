@@ -194,7 +194,7 @@ export default function ImprovedAbout() {
             </div>
           </Card>
         </div>
-      </div>
+      </main>
 
       <Footer />
     </div>
