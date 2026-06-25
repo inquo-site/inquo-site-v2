@@ -54,6 +54,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tool/image" element={<ImageGenerator />} />
             <Route path="/tool/linkedin" element={<LinkedInOptimizer />} />
+            <Route path="/tool/linkedin-post" element={<LinkedInPostOptimizer />} />
             <Route path="/tools/:toolType" element={<DynamicTool />} />
             <Route path="/tool/:toolType" element={<DynamicTool />} />
             
