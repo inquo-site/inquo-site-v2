@@ -16,7 +16,9 @@ import Contact from "./pages/ImprovedContact";
 import Privacy from "./pages/Privacy";
 import DynamicTool from "./pages/tools/DynamicTool";
 import ImageGenerator from "./pages/tools/ImageGenerator";
+import LinkedInOptimizer from "./pages/tools/LinkedInOptimizer";
 import NotFound from "./pages/NotFound";
+import RotatingPromoBanner from "./components/RotatingPromoBanner";
 import Blog from "./pages/ImprovedBlog";
 import BlogPost from "./pages/BlogPost";
 import Projects from "./pages/Projects";
@@ -50,6 +52,7 @@ const App = () => (
             {/* Tools - No auth required, handled inside components */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tool/image" element={<ImageGenerator />} />
+            <Route path="/tool/linkedin" element={<LinkedInOptimizer />} />
             <Route path="/tools/:toolType" element={<DynamicTool />} />
             <Route path="/tool/:toolType" element={<DynamicTool />} />
             
@@ -60,6 +63,7 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <RotatingPromoBanner />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
